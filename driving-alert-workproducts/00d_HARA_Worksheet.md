@@ -17,7 +17,6 @@
 
 대상 시스템은 **조향 입력 → SteeringSensor → CAN → CanMonitor → SafetyPolicy → ControlCalc → PWM Actuator**로 이어지는 데이터 흐름을 기준으로 하며, CAN 메시지 Timeout, 조향각 Invalid, Alive Counter 이상, WdgM 기반 실행 이상, FAIL-SAFE 전환 및 복귀, PWM·방향 출력 이상을 주요 분석 대상으로 한다.
 
-본 문서의 ASIL 값은 교육 프로젝트 내부의 설계 우선순위 설정을 위한 후보 값이며, 실제 양산 차량의 공식 ISO 26262 ASIL 판정 결과를 의미하지 않는다.
 
 ## 2. S/E/C 평가 기준(요약)
 
