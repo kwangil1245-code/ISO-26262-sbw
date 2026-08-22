@@ -3,7 +3,7 @@
 **Document ID**: STEER-01-SRS  
 **ISO 26262 Reference**: Part 4, Cl.6 (System Requirements Specification)  
 **ASPICE Reference**: SYS.2 (System Requirements Analysis)  
-**Version**: 1.1  
+**Version**: 1.2  
 **Date**: 2026-08-22  
 **Status**: Draft  
 **Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템  
@@ -28,7 +28,6 @@
 | Req_009 | 조향 제어값 계산 | 시스템은 유효한 조향 입력을 기반으로 조향 방향과 출력 크기를 계산해야 한다. | 상/중 |  |  |  | P4 |
 | Req_010 | 조향 하드웨어 출력 | 시스템은 계산된 조향 제어값을 조향 출력 장치로 전달해야 한다. | 상/상 |  |  |  | P4 |
 | Req_011 | 진단 상태 제공 | 시스템은 현재 동작 상태와 진단된 오류 상태를 외부에서 확인할 수 있도록 제공해야 한다. | 중/중 |  |  |  | P5 |
-| Req_012 | 안전 반응시간 | 시스템은 조향 관련 이상이 발생한 경우 정의된 안전시간 내에 이상을 감지하고 조향 출력을 안전한 상태로 제한해야 한다. | 상/상 |  |  | HARA 연계 | P6 |
 
 ## B. 요구사항 요약 블록
 
@@ -41,13 +40,12 @@
 | P3 | 안전 상태 전환 및 복귀 |
 | P4 | 조향 제어 및 하드웨어 출력 |
 | P5 | 상태 모니터링 및 진단 정보 제공 |
-| P6 | 기능안전 Timing 요구사항 |
 
 ### 우선순위 요구사항 요약
 
 | 우선순위 등급 | 기준(중요도/긴급도) | 개수 | 포함 Req. ID |
 |---|---|---:|---|
-| Critical | 상/상 | 9개 | Req_002~Req_008, Req_010, Req_012 |
+| Critical | 상/상 | 8개 | Req_002~Req_008, Req_010 |
 | High | 상/중 | 2개 | Req_001, Req_009 |
 | Medium | 중/중 | 1개 | Req_011 |
 
@@ -55,10 +53,10 @@
 
 | 안전 등급 | HARA ID | 관련 Req. ID |
 |---|---|---|
-| ASIL D (Provisional) | HC-01 | Req_002, Req_003, Req_006, Req_007, Req_012 |
-| ASIL D (Provisional) | HC-02 | Req_001, Req_004, Req_006, Req_007, Req_012 |
-| ASIL D (Provisional) | HC-03 | Req_005~Req_007, Req_012 |
-| ASIL D (Provisional) | HC-04 | Req_006, Req_007, Req_012 |
+| ASIL D (Provisional) | HC-01 | Req_002, Req_003, Req_006, Req_007 |
+| ASIL D (Provisional) | HC-02 | Req_001, Req_004, Req_006, Req_007 |
+| ASIL D (Provisional) | HC-03 | Req_005~Req_007 |
+| ASIL D (Provisional) | HC-04 | Req_006, Req_007 |
 | ASIL C (Provisional) | HC-05 | Req_008 |
 | ASIL D (Provisional) | HC-06 | Req_009, Req_010 |
 
@@ -68,10 +66,10 @@
 
 | HARA ID | Safety Goal ID | 관련 시스템 요구사항 | 하위 설계에서 구체화할 내용 |
 |---|---|---|---|
-| HC-01 | SG-01 | Req_002, Req_003, Req_006, Req_007, Req_012 | CAN 송신 주기, Alive Counter 판정 기준, Timeout 검출시간, 안전 출력값 |
-| HC-02 | SG-02 | Req_001, Req_004, Req_006, Req_007, Req_012 | 조향각 자료형, 유효 범위, Invalid 판정 조건, 대체 출력값 |
-| HC-03 | SG-03 | Req_005~Req_007, Req_012 | WdgM 감시 대상, Checkpoint, 실행 감시 주기, Fault 상태 판정 |
-| HC-04 | SG-04 | Req_006, Req_007, Req_012 | NORMAL/FAIL-SAFE 상태 전이, 출력 차단 순서, Fault Reaction Time |
+| HC-01 | SG-01 | Req_002, Req_003, Req_006, Req_007 | CAN 송신 주기, Alive Counter 판정 기준, Timeout 검출 조건, 안전 출력값 |
+| HC-02 | SG-02 | Req_001, Req_004, Req_006, Req_007 | 조향각 자료형, 유효 범위, Invalid 판정 조건, 대체 출력값 |
+| HC-03 | SG-03 | Req_005~Req_007 | WdgM 감시 대상, Checkpoint, 실행 감시 조건, Fault 상태 판정 |
+| HC-04 | SG-04 | Req_006, Req_007 | NORMAL/FAIL-SAFE 상태 전이와 출력 차단 순서 |
 | HC-05 | SG-05 | Req_008 | 정상 판정 조건, 연속 정상 확인 횟수, 복귀 카운터 초기화 조건 |
 | HC-06 | SG-06 | Req_009, Req_010 | 방향 판정 임계값, PWM 계산식, 출력 범위, IoHwAb 채널 및 핀 연결 |
 
@@ -84,7 +82,6 @@
 | Req_006~Req_008 | SafetyPolicy 상태 전이 및 복귀 기능 | FAIL-SAFE 전환·유지·복귀 시험 |
 | Req_009, Req_010 | ControlCalc 및 Actuator 출력 기능 | PWM·방향 계산과 하드웨어 출력 시험 |
 | Req_011 | 진단 및 모니터링 인터페이스 | 상태·Fault 관측 가능성 시험 |
-| Req_012 | Fault Detection 및 Reaction Timing | Worst-case 반응시간 측정 시험 |
 
 ---
 
