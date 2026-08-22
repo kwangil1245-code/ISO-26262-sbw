@@ -1,7 +1,7 @@
 # 프로젝트 개요 (Project Overview)
 
 **Document ID**: STEER-00-OV  
-**Version**: 1.0  
+**Version**: 1.1  
 **Date**: 2026-08-22  
 **Status**: Draft (Submission Summary)  
 **Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템  
@@ -58,7 +58,6 @@
 | WdgM Fault 판정 | Global Status가 FAILED, EXPIRED 또는 STOPPED이면 내부 실행 Fault로 판정한다. |
 | FAIL-SAFE 출력 | FAIL-SAFE 상태에서는 조향각과 PWM Duty를 0으로 설정하고 좌·우 방향 및 구동 출력을 비활성화한다. |
 | 복귀 기준 | Fault가 없는 정상 조건이 3회 연속 확인된 경우에만 NORMAL 상태로 복귀한다. |
-| Fault 반응시간 | Fault 검출 후 200 ms 이내 PWM 출력을 안전 상태로 제한하는 것을 설계 목표로 한다. |
 | 계층 분리 | 입력, 진단, 안전 판단, 제어 계산 및 하드웨어 출력을 독립 SWC로 분리하고 RTE 인터페이스로 연결한다. |
 
 ## 5-1. 상태 전이 매트릭스
@@ -98,7 +97,3 @@
 | `05_Unit_Test.md` | CanMonitor, SafetyPolicy, ControlCalc 등 SWC 단위 테스트 명세 |
 | `06_Integration_Test.md` | SWC 인터페이스와 입력-판단-출력 데이터 흐름 통합 테스트 명세 |
 | `07_System_Test.md` | Fault Injection 기반 Timeout, Invalid, WdgM, FAIL-SAFE 및 Recovery 시스템 테스트 |
-
----
-
-본 문서의 200 ms Fault 반응시간은 HARA에서 도출한 설계 목표이며, 실제 측정 결과가 확보되기 전까지 검증 대상 값으로 관리한다.
