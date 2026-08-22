@@ -50,5 +50,3 @@ HARA의 안전 목표와 timing 가정은 아래 요구사항 및 검증 문서�
 - [`07_System_Test.md`](../07_System_Test.md): Fault Injection 기반 Timeout, Invalid, WdgM, FAIL-SAFE 및 Recovery 검증
 
 ---
-
-본 문서의 승인 상태와 ASIL Candidate는 교육 프로젝트 내부 Baseline을 의미하며, ISO 26262 인증 또는 실제 양산 차량의 공식 안전 승인을 의미하지 않는다.
