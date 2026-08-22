@@ -11,12 +11,15 @@
 
 ---
 
+> 제출용 정리본: 주요 위험 이벤트, 안전 목표, timing 가정 및 대표 검증 근거만 유지한 문서입니다.
+
 ## 1. 목적 및 범위
 
 본 문서는 AUTOSAR 기반 조향 오류 복구 및 진단 시스템에서 발생 가능한 주요 위험 상황에 대한 S/E/C 평가, ASIL 후보, 안전 목표 및 대표 검증 관점을 정리한다.
 
 대상 시스템은 **조향 입력 → SteeringSensor → CAN → CanMonitor → SafetyPolicy → ControlCalc → PWM Actuator**로 이어지는 데이터 흐름을 기준으로 하며, CAN 메시지 Timeout, 조향각 Invalid, Alive Counter 이상, WdgM 기반 실행 이상, FAIL-SAFE 전환 및 복귀, PWM·방향 출력 이상을 주요 분석 대상으로 한다.
 
+본 문서의 ASIL 값은 교육 프로젝트 내부의 설계 우선순위 설정을 위한 후보 값이며, 실제 양산 차량의 공식 ISO 26262 ASIL 판정 결과를 의미하지 않는다.
 
 ## 2. S/E/C 평가 기준(요약)
 
@@ -30,12 +33,12 @@
 
 | HARA ID | 관련 Req | Hazardous Event (요약) | Operational Situation | S | E | C | ASIL Candidate | 안전 목표 | FTTI/Timing 가정 | 대표 검증 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| HC-01 | SR-STEER-001, SR-STEER-003 | CAN 메시지 미수신을 감지하지 못해 이전 조향 명령이 계속 사용됨 | 주행 중 입력 ECU 또는 CAN 통신 이상으로 조향 데이터 갱신 중단 | S3 | E4 | C3 | D | **SG-01:** 조향 CAN 데이터가 정상적으로 갱신되지 않는 경우 Timeout을 검출하고 조향 출력을 안전 상태로 전환해야 한다. | 200 ms 이내 검출 및 출력 제한 | 주요 검증 ID: `UT-CANMON-001`, `IT-CAN-001`, `ST-TIMEOUT-001` (CAN 및 Alive Counter 갱신 중단 시 Timeout 검출, FAIL-SAFE 전환, PWM 0 확인) |
-| HC-02 | SR-STEER-002, SR-STEER-003 | 비정상 조향각이 정상 입력으로 처리되어 운전자 의도와 다른 조향 출력이 발생함 | 주행 중 센서 오류, 센서 단선 또는 허용 범위를 벗어난 조향 데이터 발생 | S3 | E4 | C3 | D | **SG-02:** 허용 범위를 벗어난 조향 입력은 Invalid로 판정하고 해당 입력을 조향 출력에 사용하지 않아야 한다. | 입력 수신 후 100 ms 이내 | 주요 검증 ID: `UT-CANMON-002`, `IT-CAN-002`, `ST-INVALID-001` (유효 범위 초과 입력 감지, Fault 전달, 비정상 출력 차단 확인) |
-| HC-03 | SR-STEER-004 | SW Runnable 또는 Task 실행 이상을 감지하지 못해 오래된 데이터나 비정상 제어 출력이 지속됨 | ECU 내부에서 조향 제어 Runnable 또는 Task의 주기·실행 순서 이상 발생 | S3 | E3 | C3 | D | **SG-03:** 조향 제어 관련 SW 실행 이상을 WdgM으로 감지하고 이상 발생 시 FAIL-SAFE 상태로 전환해야 한다. | 200 ms 이내 검출 및 전환 | 주요 검증 ID: `UT-SAFETY-001`, `IT-WDGM-001`, `ST-WDGM-001` (Supervised Entity 실행 이상 검출과 PWM 차단 확인) |
-| HC-04 | SR-STEER-005, SR-STEER-006 | 입력 또는 내부 실행 이상이 발생했음에도 FAIL-SAFE 전환이 수행되지 않아 조향 출력이 지속됨 | 차량 주행 중 Timeout, Invalid 또는 WdgM Fault 발생 | S3 | E4 | C3 | D | **SG-04:** 조향 입력 또는 내부 실행 Fault 발생 시 NORMAL에서 FAIL-SAFE로 전환하고 PWM 출력을 제한하거나 차단해야 한다. | Fault 판단 후 100 ms 이내 | 주요 검증 ID: `UT-SAFETY-002`, `IT-SAFETY-001`, `ST-FAILSAFE-001` (Fault별 상태 전환과 PWM Duty 0 적용 확인) |
-| HC-05 | SR-STEER-007 | 일시적인 정상 입력만으로 FAIL-SAFE가 해제되어 불안정한 상태에서 조향 출력이 재활성화됨 | 간헐적 CAN 장애 또는 센서 오류 후 정상 데이터가 일시적으로 수신됨 | S3 | E3 | C2 | C | **SG-05:** FAIL-SAFE 상태는 연속 정상 조건이 확인된 경우에만 NORMAL 상태로 복귀해야 한다. | 정상 입력 3회 연속 확인 후 복귀 | 주요 검증 ID: `UT-SAFETY-003`, `IT-SAFETY-002`, `ST-RECOVERY-001` (정상 입력 1·2회 시 FAIL-SAFE 유지, 3회 시 NORMAL 복귀 확인) |
-| HC-06 | SR-STEER-008, SR-STEER-009 | PWM Duty 또는 좌·우 방향 출력 오류로 운전자 의도와 다른 조향 출력이 발생함 | 정상 조향 입력 중 ControlCalc 계산 오류 또는 Actuator 출력 경로 이상 발생 | S3 | E4 | C3 | D | **SG-06:** 조향 방향 및 PWM 출력은 검증된 입력과 SafetyPolicy 상태를 기반으로 생성되어야 하며 Fault 상태에서는 PWM 출력을 차단해야 한다. | 제어 Cycle 내 적용 | 주요 검증 ID: `UT-CONTROL-001`, `IT-ACTUATOR-001`, `ST-PWM-001` (정상 좌·우 방향 및 Duty 출력, Fault 시 PWM Duty 0 확인) |
+| HC-01 | Req_002, Req_003, Req_006, Req_007, Req_012 | CAN 메시지 미수신을 감지하지 못해 이전 조향 명령이 계속 사용됨 | 주행 중 입력 ECU 또는 CAN 통신 이상으로 조향 데이터 갱신 중단 | S3 | E4 | C3 | D (Provisional) | **SG-01:** 조향 CAN 데이터가 정상적으로 갱신되지 않는 경우 Timeout을 검출하고 조향 출력을 안전 상태로 전환해야 한다. | 200 ms 이내 검출 및 출력 제한 | 주요 검증 ID: `UT-CANMON-001`, `IT-CAN-001`, `ST-TIMEOUT-001` (CAN 및 Alive Counter 갱신 중단 시 Timeout 검출, FAIL-SAFE 전환, PWM 0 확인) |
+| HC-02 | Req_001, Req_004, Req_006, Req_007, Req_012 | 비정상 조향각이 정상 입력으로 처리되어 운전자 의도와 다른 조향 출력이 발생함 | 주행 중 센서 오류, 센서 단선 또는 허용 범위를 벗어난 조향 데이터 발생 | S3 | E4 | C3 | D (Provisional) | **SG-02:** 허용 범위를 벗어난 조향 입력은 Invalid로 판정하고 해당 입력을 조향 출력에 사용하지 않아야 한다. | 입력 수신 후 100 ms 이내 | 주요 검증 ID: `UT-CANMON-002`, `IT-CAN-002`, `ST-INVALID-001` (유효 범위 초과 입력 감지, Fault 전달, 비정상 출력 차단 확인) |
+| HC-03 | Req_005~Req_007, Req_012 | SW Runnable 또는 Task 실행 이상을 감지하지 못해 오래된 데이터나 비정상 제어 출력이 지속됨 | ECU 내부에서 조향 제어 Runnable 또는 Task의 주기·실행 순서 이상 발생 | S3 | E3 | C3 | D (Provisional) | **SG-03:** 조향 제어 관련 SW 실행 이상을 WdgM으로 감지하고 이상 발생 시 FAIL-SAFE 상태로 전환해야 한다. | 200 ms 이내 검출 및 전환 | 주요 검증 ID: `UT-SAFETY-001`, `IT-WDGM-001`, `ST-WDGM-001` (Supervised Entity 실행 이상 검출과 PWM 차단 확인) |
+| HC-04 | Req_006, Req_007, Req_012 | 입력 또는 내부 실행 이상이 발생했음에도 FAIL-SAFE 전환이 수행되지 않아 조향 출력이 지속됨 | 차량 주행 중 Timeout, Invalid 또는 WdgM Fault 발생 | S3 | E4 | C3 | D (Provisional) | **SG-04:** 조향 입력 또는 내부 실행 Fault 발생 시 NORMAL에서 FAIL-SAFE로 전환하고 PWM 출력을 제한하거나 차단해야 한다. | Fault 판단 후 100 ms 이내 | 주요 검증 ID: `UT-SAFETY-002`, `IT-SAFETY-001`, `ST-FAILSAFE-001` (Fault별 상태 전환과 PWM Duty 0 적용 확인) |
+| HC-05 | Req_008 | 일시적인 정상 입력만으로 FAIL-SAFE가 해제되어 불안정한 상태에서 조향 출력이 재활성화됨 | 간헐적 CAN 장애 또는 센서 오류 후 정상 데이터가 일시적으로 수신됨 | S3 | E3 | C2 | C (Provisional) | **SG-05:** FAIL-SAFE 상태는 연속 정상 조건이 확인된 경우에만 NORMAL 상태로 복귀해야 한다. | 정상 입력 3회 연속 확인 후 복귀 | 주요 검증 ID: `UT-SAFETY-003`, `IT-SAFETY-002`, `ST-RECOVERY-001` (정상 입력 1·2회 시 FAIL-SAFE 유지, 3회 시 NORMAL 복귀 확인) |
+| HC-06 | Req_009, Req_010 | PWM Duty 또는 좌·우 방향 출력 오류로 운전자 의도와 다른 조향 출력이 발생함 | 정상 조향 입력 중 ControlCalc 계산 오류 또는 Actuator 출력 경로 이상 발생 | S3 | E4 | C3 | D (Provisional) | **SG-06:** 조향 방향 및 PWM 출력은 검증된 입력과 SafetyPolicy 상태를 기반으로 생성되어야 하며 Fault 상태에서는 PWM 출력을 차단해야 한다. | 제어 Cycle 내 적용 | 주요 검증 ID: `UT-CONTROL-001`, `IT-ACTUATOR-001`, `ST-PWM-001` (정상 좌·우 방향 및 Duty 출력, Fault 시 PWM Duty 0 확인) |
 
 ## 4. 연계 검증 문서
 
@@ -47,3 +50,5 @@ HARA의 안전 목표와 timing 가정은 아래 요구사항 및 검증 문서�
 - [`07_System_Test.md`](../07_System_Test.md): Fault Injection 기반 Timeout, Invalid, WdgM, FAIL-SAFE 및 Recovery 검증
 
 ---
+
+본 문서의 승인 상태와 ASIL Candidate는 교육 프로젝트 내부 Baseline을 의미하며, ISO 26262 인증 또는 실제 양산 차량의 공식 안전 승인을 의미하지 않는다.
