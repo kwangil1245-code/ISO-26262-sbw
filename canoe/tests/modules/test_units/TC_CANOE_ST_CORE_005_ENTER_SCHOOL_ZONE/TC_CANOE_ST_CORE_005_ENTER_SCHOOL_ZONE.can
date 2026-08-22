@@ -1,0 +1,53 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_CORE_005_ENTER_SCHOOL_ZONE()
+{
+  testStepPass("doc-trace", "ST_005 - 일반 구간 주행 중 스쿨존 진입 후 과속 조건이 유효하면 스쿨존 경고 정책으로 즉시 전환되는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(1, 700, 1000))
+  {
+    return;
+  }
+
+  if (!waitForCoreSelectedAlertState(0, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st005-baseline-level", 0, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+
+  if (!launchScenarioAndWait(2, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForNavContextState(1, 30, 800) ||
+      !waitForAmbientStateMinLevel(3, 3, 3, 5, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st005-zone", 1, (long)@Core::baseZoneContext, "baseZoneContext");
+  assertIntMin("st005-level", 3, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("st005-type", 3, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("st005-ambient-color", 3, (long)@Body::ambientColor, "ambientColor");
+  assertIntEq("st005-ambient-pattern", 5, (long)@Body::ambientPattern, "ambientPattern");
+
+  testStepPass("doc-pass", "PASS - ST_005 - 일반 구간 주행 중 스쿨존 진입 후 과속 조건이 유효하면 스쿨존 경고 정책으로 즉시 전환되는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}

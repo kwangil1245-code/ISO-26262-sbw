@@ -1,0 +1,1329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vehicle ECU Architecture and Interaction Reference (2026-03-28)</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 12mm 16mm 12mm;
+    }
+
+    :root {
+      --paper: #f6f1e8;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #dbe4ee;
+      --accent: #0f766e;
+      --card: #ffffff;
+    }
+
+    html {
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px 18px 40px;
+    }
+
+    article {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 28px 32px 36px;
+      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.05);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 34px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin: 34px 0 14px;
+      padding-top: 18px;
+      border-top: 2px solid #e2e8f0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 26px 0 10px;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    h4 {
+      margin: 20px 0 8px;
+      font-size: 15px;
+      line-height: 1.3;
+      color: var(--accent);
+    }
+
+    p, ul, ol, table {
+      margin: 0 0 14px;
+    }
+
+    ul, ol {
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 0 0 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+      word-break: break-word;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+    }
+
+    td:first-child,
+    th:first-child {
+      width: 210px;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      margin: 16px 0 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    code {
+      font-family: "Cascadia Code", "Consolas", monospace;
+      font-size: 12px;
+      background: #f8fafc;
+      padding: 0.1em 0.35em;
+      border-radius: 6px;
+    }
+
+    a {
+      color: #0f4c81;
+      text-decoration: none;
+    }
+
+    blockquote {
+      margin: 0 0 16px;
+      padding: 0 0 0 16px;
+      border-left: 4px solid #cbd5e1;
+      color: var(--muted);
+    }
+
+    div[style*="page-break-before"] {
+      page-break-before: always;
+      break-before: page;
+      height: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    @media print {
+      img {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+<h1>Vehicle ECU Architecture and Interaction Reference (2026-03-28)</h1>
+<p>Subtitle: CANoe SIL baseline reference for CAN and Ethernet behavior.</p>
+<p>Vehicle ECU architecture and interaction reference for the active CANoe SIL baseline.
+This book brings overview maps, action flows, and ECU cards into one reading sequence.</p>
+<h2>Table Of Contents</h2>
+<ol>
+<li>Book Intent</li>
+<li>Reading Guide</li>
+<li>Visual Opening</li>
+<li>System Narrative</li>
+<li>Group Snapshot</li>
+<li>Action-Flow Pack</li>
+<li>ECU Catalog</li>
+</ol>
+<h2>Book Intent</h2>
+<p>This book explains the CANoe runtime architecture through overview maps, action flows, and per-ECU cards.
+The structure is behavior-first: system overview and action flows come before the ECU catalog.
+Each ECU page is a reading aid for role, contracts, linked ECU, and representative runtime behavior.</p>
+<h2>Reading Guide</h2>
+<ol>
+<li>Start with the overview SVG to understand the full 101-ECU surface.</li>
+<li>Move into the grouped architecture view to see domain-level bundling.</li>
+<li>Read the canonical action flows to understand behavior chains.</li>
+<li>Move into per-ECU cards after the behavior context is clear.</li>
+</ol>
+<h3>Core Reading Path</h3>
+<ol>
+<li><a href="svg/OVERVIEW_RUNTIME_101_ECU_DOMAIN_MAP_2026-03-28.svg">Overview SVG</a></li>
+<li><a href="ECU_GROUP_NETWORK_VIEW_2026-03-28.md">Group View</a></li>
+<li><a href="ACTION_FLOW_INDEX_2026-03-28.md">Action Flow Index</a></li>
+<li><a href="ECU_ACTION_FLOW_MATRIX_2026-03-28.md">ECU to Flow Matrix</a></li>
+<li><a href="ECU_CARD_INDEX_2026-03-28.md">ECU Card Index</a></li>
+</ol>
+<h3>Index Map</h3>
+<ul>
+<li><a href="ACTION_FLOW_INDEX_2026-03-28.md">Action Flow Index</a>: use this to find one canonical behavior chapter quickly.</li>
+<li><a href="ECU_ACTION_FLOW_MATRIX_2026-03-28.md">ECU to Flow Matrix</a>: use this to move from one ECU to its primary and supporting flows.</li>
+<li><a href="ECU_CARD_INDEX_2026-03-28.md">ECU Card Index</a>: use this to jump directly into <code>p1/p2/p3/p4</code> card pages.</li>
+<li><a href="SIGNAL_FLOW_INDEX_2026-03-28.md">Signal Flow Index</a>: use this only when exact runtime names and detailed signal routes are needed.</li>
+</ul>
+<div style="page-break-before: always;"></div>
+
+<h2>Visual Opening</h2>
+<p>Start with the full 101-ECU overview before zooming into grouped figures, action flows, and per-ECU cards.</p>
+<p><img alt="" src="svg/OVERVIEW_RUNTIME_101_ECU_DOMAIN_MAP_2026-03-28.svg" /></p>
+<h2>System Narrative</h2>
+<ul>
+<li>Runtime surface inventory: <code>101</code> ECU</li>
+<li>Canonical behavior pack: <code>20</code> action flows</li>
+<li>Meaningful behavior is not organized as 101 independent flows.</li>
+<li>One action flow crosses multiple ECU, and one ECU participates in multiple action flows.</li>
+<li>This book therefore uses three layers: overview architecture, action-flow atlas, and per-ECU catalog with detailed signal companions.</li>
+</ul>
+<h3>Book Parts</h3>
+<ul>
+<li>Part I. Architecture narrative: overview map, grouped view, and action-flow pack.</li>
+<li>Part II. ECU catalog: 101 ECU overview pages with one or more reference pages.</li>
+</ul>
+<div style="page-break-before: always;"></div>
+
+<h2>Group Snapshot</h2>
+<h3>Group 01 Base Vehicle Dynamics</h3>
+<p>The base vehicle dynamics group consolidates steering, braking, propulsion, and chassis health into one controllable runtime lane.</p>
+<ul>
+<li>Included domains: <code>Chassis, Powertrain</code></li>
+<li>Representative action flows: <code>FLOW_01~05 (5 flows)</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_01_BASE_VEHICLE_DYNAMICS_2026-03-28.svg" /></p>
+<h3>Group 02 ADAS AEB Brake Assist</h3>
+<p>The ADAS group collects perception, collision risk, parking assist, and intervention logic into one behavior-decision layer.</p>
+<ul>
+<li>Included domains: <code>ADAS</code></li>
+<li>Representative action flows: <code>FLOW_06~10 (5 flows)</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_02_ADAS_AEB_BRAKE_ASSIST_2026-03-28.svg" /></p>
+<h3>Group 03 Display Warning Audio</h3>
+<p>The display and alert group turns selected warning state into visible, audible, and service-facing user output.</p>
+<ul>
+<li>Included domains: <code>Infotainment</code></li>
+<li>Representative action flows: <code>FLOW_11~15 (5 flows)</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_03_DISPLAY_WARNING_AUDIO_2026-03-28.svg" /></p>
+<h3>Group 04 Body Comfort Ambient</h3>
+<p>The body and comfort group amplifies warning context through lighting, entry, ambient, climate, and comfort-domain state.</p>
+<ul>
+<li>Included domains: <code>Body</code></li>
+<li>Representative action flows: <code>FLOW_16~18 (3 flows)</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_04_BODY_COMFORT_AMBIENT_2026-03-28.svg" /></p>
+<h3>Group 05 Validation Scenario</h3>
+<p>The validation group isolates scenario injection and verdict readback so test orchestration stays separate from normal feature ownership.</p>
+<ul>
+<li>Included domains: <code>ETH_Backbone</code></li>
+<li>Representative action flows: <code>FLOW_19</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_05_VALIDATION_SCENARIO_2026-03-28.svg" /></p>
+<h3>Group 06 Backbone Gateway Diagnostics</h3>
+<p>The backbone and diagnostics group routes runtime state, service traffic, and external interfaces without becoming a hidden feature owner.</p>
+<ul>
+<li>Included domains: <code>ETH_Backbone</code></li>
+<li>Representative action flows: <code>FLOW_20</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_06_BACKBONE_GATEWAY_DIAGNOSTICS_2026-03-28.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>Action-Flow Pack</h2>
+<p>The canonical action-flow pack is the behavior atlas for this project.
+Use it to understand why multiple ECU cards point back to the same flow family.</p>
+<ul>
+<li><a href="ACTION_FLOW_INDEX_2026-03-28.md">Action Flow Index</a></li>
+<li><a href="ECU_ACTION_FLOW_MATRIX_2026-03-28.md">ECU to Flow Matrix</a></li>
+<li>Flow figures are embedded below so the main body can be read in one sequence.</li>
+</ul>
+<h3>Dynamics</h3>
+<p>These flows explain how driver input, vehicle state, brake intervention, and propulsion feedback stay aligned on the runtime surface.</p>
+<h4><code>FLOW_01</code> Steering Control Readback</h4>
+<p>Manual steering input is normalized, published as steering state, and rendered back into the steering readback path.</p>
+<ul>
+<li>User outcome: Steering bar, steering angle readback, and wheel feedback move together without drift.</li>
+<li>Primary ECU bank: <code>CGW, CLU, ESC, MDPS, RWS, SAS</code></li>
+<li>Representative signals: <code>Steering Angle Cmd, Steering Angle, Steering State Can, Steering Torque</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_01_STEERING_CONTROL_READBACK_2026-03-28.svg" /></p>
+<h4><code>FLOW_02</code> Brake Stability Response</h4>
+<p>Brake request, AEB pressure intent, and stability outputs are synchronized across chassis brake owners and downstream readers.</p>
+<ul>
+<li>User outcome: Brake intervention feels coordinated and the driver sees consistent brake and stability state feedback.</li>
+<li>Primary ECU bank: <code>ABS, AEB, EHB, EPB, ESC, FCA, VCU, VSM</code></li>
+<li>Representative signals: <code>AEB Domain State, Brake Status, Brake Temp, Wheel Speed</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_02_BRAKE_STABILITY_RESPONSE_2026-03-28.svg" /></p>
+<h4><code>FLOW_03</code> Propulsion Energy Status</h4>
+<p>Powertrain and energy ECUs consolidate drive, torque, battery, and charging state into the central propulsion state lane.</p>
+<ul>
+<li>User outcome: Vehicle mode, energy state, and propulsion readiness appear as one coherent status surface.</li>
+<li>Primary ECU bank: <code>BAT_BMS, CPC, DCDC, EMS, EOP, EWP, FPCM, INVERTER, ISG, LVR, MCU, OBC, TCU, VCU, _4WD</code></li>
+<li>Representative signals: <code>Bat Bms State, State Can, Powertrain Gateway, Speed</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_03_PROPULSION_ENERGY_STATUS_2026-03-28.svg" /></p>
+<h4><code>FLOW_04</code> Cruise Speed Support</h4>
+<p>Cruise and longitudinal support state moves from support controllers into vehicle speed management and driver-facing outputs.</p>
+<ul>
+<li>User outcome: Cruise support state is readable, timely, and aligned between control and HMI.</li>
+<li>Primary ECU bank: <code>EMS, SCC, TCU, VCU</code></li>
+<li>Representative signals: <code>Cruise Set Speed, Cruise State, State Can, Support State</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_04_CRUISE_SPEED_SUPPORT_2026-03-28.svg" /></p>
+<h4><code>FLOW_05</code> Chassis Sensor Health</h4>
+<p>Wheel, angle, suspension, and chassis leaf signals are collected so downstream control and visibility stay health-aware.</p>
+<ul>
+<li>User outcome: Chassis sensing and readiness stay visible and synchronized across control and display surfaces.</li>
+<li>Primary ECU bank: <code>ABS, ACU, ASM, CDC, ECS, EHB, EPB, ESC, MDPS, ODS, RWS, SAS, TPMS, VCU, VSM</code></li>
+<li>Representative signals: <code>Steering Angle, Wheel Speed, Tire Pressure, Suspension State</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_05_CHASSIS_SENSOR_HEALTH_2026-03-28.svg" /></p>
+<h3>ADAS</h3>
+<p>These flows show how sensing, fusion, and assist logic become one coherent intervention and warning chain.</p>
+<h4><code>FLOW_06</code> Object Risk Fusion</h4>
+<p>Radar, camera, lidar, and perception nodes are fused into one object-risk lane for ADAS warning and assist decisions.</p>
+<ul>
+<li>User outcome: Object-risk interpretation is unified before any warning or assist output is shown to the driver.</li>
+<li>Primary ECU bank: <code>ADAS, AEB, AVM, BCW, DMS, FCA, FCAM, FRADAR, HWP, LCA, LDR, LDWS_LKAS, OMS, PKM, PUS, RPC, RRM, RSPA, SCC, SPAS, SPM, SRR_FL, SRR_FR, SRR_RL, SRR_RR, TRM</code></li>
+<li>Representative signals: <code>Object Risk, Lane State, ADAS Domain State, Alert Level</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_06_OBJECT_RISK_FUSION_2026-03-28.svg" /></p>
+<h4><code>FLOW_07</code> AEB Decel Intervention</h4>
+<p>AEB stop intent, decel profile, and downstream chassis response are connected as one intervention chain.</p>
+<ul>
+<li>User outcome: AEB behavior reads as one intervention story instead of separate ECU reactions.</li>
+<li>Primary ECU bank: <code>ADAS, AEB, EHB, ESC, FCA, SCC, VSM</code></li>
+<li>Representative signals: <code>Fca State, AEB Domain State, Decel Assist Request, Brake Status</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_07_AEB_DECEL_INTERVENTION_2026-03-28.svg" /></p>
+<h4><code>FLOW_08</code> Lane and Surround Keeping</h4>
+<p>Lane keeping, blind-spot, and surround sensing work together to support steering and warning decisions.</p>
+<ul>
+<li>User outcome: Lane and surround warnings appear as one steering-side assistance behavior.</li>
+<li>Primary ECU bank: <code>ADAS, BCW, LCA, LDWS_LKAS, SRR_FL, SRR_FR, SRR_RL, SRR_RR</code></li>
+<li>Representative signals: <code>Lane State, Blind Spot State, Steering State Can, Warning Text Code</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_08_LANE_SURROUND_KEEPING_2026-03-28.svg" /></p>
+<h4><code>FLOW_09</code> Parking and Surround Assist</h4>
+<p>Parking cameras, ultrasonic sensing, and parking controllers feed one parking-assist behavior chain.</p>
+<ul>
+<li>User outcome: Parking guidance and surround assistance feel like one guided maneuver story.</li>
+<li>Primary ECU bank: <code>ADAS, AVM, PKM, PUS, RPC, RRM, RSPA, SPAS, SPM</code></li>
+<li>Representative signals: <code>Parking State, Ultrasonic State, Camera State, Maneuver Status</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_09_PARKING_SURROUND_ASSIST_2026-03-28.svg" /></p>
+<h4><code>FLOW_10</code> Driver Monitor and Occupant Risk</h4>
+<p>Driver state and occupant perception are fed into the warning lane before output arbitration happens.</p>
+<ul>
+<li>User outcome: Driver-state and occupant warnings are visible, audible, and consistent with the active context.</li>
+<li>Primary ECU bank: <code>DMS, OMS</code></li>
+<li>Representative signals: <code>Driver State, Occupant State, Alert Type, Base Volume</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_10_DRIVER_MONITOR_OCCUPANT_2026-03-28.svg" /></p>
+<h3>Display and Alert</h3>
+<p>These flows turn selected alert state into cluster, HUD, audio, navigation, and service-facing user output.</p>
+<h4><code>FLOW_11</code> Navigation Zone Context Ingress</h4>
+<p>Map and telematics context enters the runtime and becomes zone-aware alert context for downstream selection and HMI.</p>
+<ul>
+<li>User outcome: Zone-aware warning behavior is traceable from map context ingress to the final driver cue.</li>
+<li>Primary ECU bank: <code>AMP, CLU, HUD, IVI, NAV, RSE, TMU, VCS</code></li>
+<li>Representative signals: <code>Navigation Context Can, Navigation Module State, Road Zone State, Alert Type</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_11_NAV_ZONE_CONTEXT_INGRESS_2026-03-28.svg" /></p>
+<h4><code>FLOW_12</code> V2X Emergency Ingress</h4>
+<p>Emergency-vehicle ingress arrives through the V2X lane and is routed into the warning decision chain.</p>
+<ul>
+<li>User outcome: Emergency-vehicle alerts have a clear ingress point and an explainable output path.</li>
+<li>Primary ECU bank: <code>AMP, CGW, ETHB, HUD, V2X</code></li>
+<li>Representative signals: <code>V2X, ETH Emergency Alert, Alert Level, Warning Text Code</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_12_V2X_EMERGENCY_INGRESS_2026-03-28.svg" /></p>
+<h4><code>FLOW_13</code> Alert Arbitration and Gate</h4>
+<p>Multiple warning candidates are reduced into one selected alert with explicit gateway and display semantics.</p>
+<ul>
+<li>User outcome: Only one alert meaning survives to the user-facing surfaces, and the gate reason remains explainable.</li>
+<li>Primary ECU bank: <code>AMP, CGW, CLU, HUD, IVI, TMU, V2X, VCS</code></li>
+<li>Representative signals: <code>Alert Type, Alert Level, Alert Gate Reason, Warning Text Code</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_13_ALERT_ARBITRATION_GATE_2026-03-28.svg" /></p>
+<h4><code>FLOW_14</code> Cluster, HUD, and Audio Output</h4>
+<p>Selected warning state is rendered into cluster, HUD, and audio output without diverging message semantics.</p>
+<ul>
+<li>User outcome: Visual and audio warning channels stay aligned instead of competing with each other.</li>
+<li>Primary ECU bank: <code>AMP, CLU, HUD, IVI, TMU, VCS</code></li>
+<li>Representative signals: <code>Warning Text Code, Steering, Volume Level, Base Volume</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_14_CLUSTER_HUD_AUDIO_OUTPUT_2026-03-28.svg" /></p>
+<h4><code>FLOW_15</code> Service and Access HMI</h4>
+<p>Digital-key, payment, OTA, and related service surfaces are orchestrated through one HMI-facing service chain.</p>
+<ul>
+<li>User outcome: Service-facing screens read like one digital-access ecosystem, not isolated widgets.</li>
+<li>Primary ECU bank: <code>CPAY, DKEY, IVI, NAV, OTA, PAK, PGS, RSE, TMU, VCS</code></li>
+<li>Representative signals: <code>Service State, Key Presence, Payment Context, OTA Readiness</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_15_SERVICE_ACCESS_HMI_2026-03-28.svg" /></p>
+<h3>Body and Comfort</h3>
+<p>These flows describe how body, comfort, and ambient actuators amplify or support the selected runtime state.</p>
+<h4><code>FLOW_16</code> Body Ambient Warning Output</h4>
+<p>Body lighting, ambient, wiper, and exterior cues amplify the selected warning state in the comfort domain.</p>
+<ul>
+<li>User outcome: Ambient and body warning outputs reinforce the selected alert instead of acting independently.</li>
+<li>Primary ECU bank: <code>ADM, AFLS, AHLS, BCM, BIO, HLM, MIR, MSC, PTG, SRF, TGM, WIP</code></li>
+<li>Representative signals: <code>Ambient Mode, Blink Left, Blink Right, Front Wiper Anim</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_16_BODY_AMBIENT_WARNING_2026-03-28.svg" /></p>
+<h4><code>FLOW_17</code> Access, Security, and Entry</h4>
+<p>Key, access, security, and door controllers are connected into one vehicle-entry behavior chain.</p>
+<ul>
+<li>User outcome: Entry, lock, and security behavior can be read as one access story from request to result.</li>
+<li>Primary ECU bank: <code>BCM, BSEC, CSM, DKEY, DOOR_FL, DOOR_FR, DOOR_RL, DOOR_RR, PAK, PGS, SMK</code></li>
+<li>Representative signals: <code>Key Presence, Door Lock State, Entry Authorization, Body Security State</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_17_ACCESS_SECURITY_ENTRY_2026-03-28.svg" /></p>
+<h4><code>FLOW_18</code> Comfort, Climate, and Seat</h4>
+<p>Climate and seat controllers are orchestrated as one comfort-domain runtime surface with body and HMI visibility.</p>
+<ul>
+<li>User outcome: Comfort-domain status is discoverable without hunting across separate climate and seat surfaces.</li>
+<li>Primary ECU bank: <code>BCM, DATC, RATC, SEAT_DRV, SEAT_PASS</code></li>
+<li>Representative signals: <code>Climate State, Seat State, Comfort Visibility, Body Comfort Mode</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_18_COMFORT_CLIMATE_SEAT_2026-03-28.svg" /></p>
+<h3>Validation</h3>
+<p>These flows keep scenario control and verdict readback inside a dedicated validation lane.</p>
+<h4><code>FLOW_19</code> Validation Scenario Control</h4>
+<p>Scenario command, injected state, and verdict readback are kept inside a dedicated validation control story.</p>
+<ul>
+<li>User outcome: Validation control remains an explicit harness story instead of leaking into product ownership.</li>
+<li>Primary ECU bank: <code>TEST_BAS, TEST_SCN</code></li>
+<li>Representative signals: <code>Scenario Command, Scenario Active Id, Scenario Result, Validation Summary Seams</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_19_VALIDATION_SCENARIO_CONTROL_2026-03-28.svg" /></p>
+<h3>Backbone</h3>
+<p>These flows describe how gateway, diagnostics, and Ethernet-facing services route state across domains.</p>
+<h4><code>FLOW_20</code> Backbone, Diagnostic, and Service Routing</h4>
+<p>Gateway, backbone, diagnostics, and service-facing surfaces route runtime state without becoming hidden feature owners.</p>
+<ul>
+<li>User outcome: Backbone and diagnostic behavior is readable as one routing story instead of scattered support nodes.</li>
+<li>Primary ECU bank: <code>CGW, DCM, EDR, ETHB, EXT_DIAG, IBOX, SGW, TEST_BAS, TEST_SCN, V2X</code></li>
+<li>Representative signals: <code>Diagnostic Request, Diagnostic Response, Gateway State, Service Routing State</code></li>
+</ul>
+<p><img alt="" src="svg/flows/action/FLOW_20_BACKBONE_DIAGNOSTIC_SERVICE_2026-03-28.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>ECU Catalog</h2>
+<p>The catalog below is grouped by architecture group so the book reads as one system story instead of a flat asset list.
+Each ECU section keeps one human-readable sentence, one overview page, one or more reference pages, and one representative detailed signal flow.</p>
+<div style="page-break-before: always;"></div>
+
+<h2>Group 01 Base Vehicle Dynamics</h2>
+<p>The base vehicle dynamics group consolidates steering, braking, propulsion, and chassis health into one controllable runtime lane.</p>
+<ul>
+<li>Included domains: <code>Chassis, Powertrain</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_01_BASE_VEHICLE_DYNAMICS_2026-03-28.svg" /></p>
+<h3><code>ABS</code></h3>
+<p>Publishes anti-lock brake state and brake intervention feedback for chassis and ADAS consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ABS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ABS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>BRAKE_LAMP_AND_ABS_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/BRAKE_LAMP_AND_ABS_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>ACU</code></h3>
+<p>Publishes crash and restraint state so gateway, body, and warning surfaces can react to occupant-safety events</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ACU_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ACU_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>ASM</code></h3>
+<p>Publishes air-suspension state so chassis and ADAS readers can adapt ride and stability behavior</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ASM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ASM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>CDC</code></h3>
+<p>Publishes damping-control state and diagnostics for chassis health and adaptation readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CDC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CDC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ACCEL_BRAKE_LONGITUDINAL_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ACCEL_BRAKE_LONGITUDINAL_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>ECS</code></h3>
+<p>Publishes electronic suspension state for chassis health and downstream ride-control consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ECS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ECS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ACCEL_BRAKE_LONGITUDINAL_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ACCEL_BRAKE_LONGITUDINAL_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>EHB</code></h3>
+<p>Coupled consumer of AEB state rather than an independent decision origin</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EHB_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EHB_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AEB_PRESSURE_TO_EHB_COMMAND_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AEB_PRESSURE_TO_EHB_COMMAND_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>EPB</code></h3>
+<p>Publishes parking-brake state and diagnostics for cluster and validation readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EPB_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EPB_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>ESC</code></h3>
+<p>Consumes vehicle and AEB state, then publishes brake and stability state to downstream readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ESC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ESC_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ESC_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ESC_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>MDPS</code></h3>
+<p>Steering state must stay aligned across manual command, owner readback, and display frame</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MDPS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MDPS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>STEERING_INPUT_TO_MDPS_STATE_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/STEERING_INPUT_TO_MDPS_STATE_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>ODS</code></h3>
+<p>Publishes occupant-detection state for body and gateway safety decisions</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ODS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ODS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>RWS</code></h3>
+<p>Publishes rear-wheel steering state so steering and stability consumers stay aligned</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RWS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RWS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>SAS</code></h3>
+<p>Publishes steering-angle sensor state for steering control, stability logic, and validation visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SAS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SAS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>STEERING_INPUT_TO_SAS_ANGLE_RAW_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/STEERING_INPUT_TO_SAS_ANGLE_RAW_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>TPMS</code></h3>
+<p>Publishes tire-pressure and wheel-health state for chassis visibility and warning surfaces</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TPMS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TPMS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>WHEEL_SPEED_TO_TPMS_TIRE_PRESSURE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/WHEEL_SPEED_TO_TPMS_TIRE_PRESSURE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>VCU</code></h3>
+<p>Primary dynamics producer for speed, drive state, and throttle interpretation</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VCU_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VCU_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VCU_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VCU_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>VCU_VEHICLE_MODE_TO_ISG_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/VCU_VEHICLE_MODE_TO_ISG_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>VSM</code></h3>
+<p>Consumes ESC and AEB domain state to produce local stability intervention behavior</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VSM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VSM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>BAT_BMS</code></h3>
+<p>Publishes battery and energy state so propulsion, charging, and display surfaces share one EV health view</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BAT_BMS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BAT_BMS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>BAT_BMS_TO_CPC_CHARGE_PORT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/BAT_BMS_TO_CPC_CHARGE_PORT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>CPC</code></h3>
+<p>Publishes central propulsion coordination state for downstream powertrain readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CPC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CPC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>BAT_BMS_TO_CPC_CHARGE_PORT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/BAT_BMS_TO_CPC_CHARGE_PORT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>DCDC</code></h3>
+<p>Publishes DC-DC converter state for energy distribution and charging-health visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DCDC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DCDC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>BAT_BMS_TO_CPC_CHARGE_PORT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/BAT_BMS_TO_CPC_CHARGE_PORT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>EMS</code></h3>
+<p>Publishes engine and propulsion health state for vehicle control and display readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EMS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EMS_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EMS_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EMS_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>VCU_VEHICLE_MODE_TO_ISG_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/VCU_VEHICLE_MODE_TO_ISG_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>EOP</code></h3>
+<p>Publishes oil-pump state for propulsion support and thermal-health visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EOP_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EOP_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>EWP</code></h3>
+<p>Publishes electric water-pump state for thermal support and propulsion-health readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EWP_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EWP_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>FPCM</code></h3>
+<p>Publishes fuel-pump control state for propulsion support and diagnostic visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FPCM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FPCM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>INVERTER</code></h3>
+<p>Publishes inverter state and power-conversion feedback for propulsion-control consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_INVERTER_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_INVERTER_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>ISG</code></h3>
+<p>Publishes starter-generator state for propulsion readiness and energy coordination</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ISG_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ISG_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>VCU_VEHICLE_MODE_TO_ISG_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/VCU_VEHICLE_MODE_TO_ISG_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>LVR</code></h3>
+<p>Publishes lever or range-selection state for drive-mode and propulsion coordination</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LVR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LVR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>VCU_VEHICLE_MODE_TO_TCU_SHIFT_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/VCU_VEHICLE_MODE_TO_TCU_SHIFT_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>MCU</code></h3>
+<p>Publishes motor-control state for torque delivery and EV propulsion coordination</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MCU_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MCU_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>OBC</code></h3>
+<p>Publishes on-board charger state for charging status and energy visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_OBC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_OBC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>OBC_BMS_TEMP_TO_CPC_TARGET_SOC_THERMAL_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/OBC_BMS_TEMP_TO_CPC_TARGET_SOC_THERMAL_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>TCU</code></h3>
+<p>Publishes transmission state for longitudinal control and driver-facing vehicle status</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TCU_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TCU_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>VCU_VEHICLE_MODE_TO_TCU_SHIFT_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/VCU_VEHICLE_MODE_TO_TCU_SHIFT_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>_4WD</code></h3>
+<p>Publishes four-wheel-drive engagement state for propulsion coordination and chassis awareness</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD__4WD_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD__4WD_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_CONTEXT_TO_VCU_ROUTING_POLICY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>Group 02 ADAS AEB Brake Assist</h2>
+<p>The ADAS group collects perception, collision risk, parking assist, and intervention logic into one behavior-decision layer.</p>
+<ul>
+<li>Included domains: <code>ADAS</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_02_ADAS_AEB_BRAKE_ASSIST_2026-03-28.svg" /></p>
+<h3><code>ADAS</code></h3>
+<p>Consumes route, chassis, and emergency context, then emits selected alert and assist intent</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ADAS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ADAS_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ADAS_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ADAS_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AEB_BRAKE_ASSIST_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AEB_BRAKE_ASSIST_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>AEB</code></h3>
+<p>One AEB profile change can appear as multiple simultaneous chassis ECU reactions</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AEB_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AEB_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ESC_AEB_INPUT_TO_VSM_INTERVENTION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>AVM</code></h3>
+<p>Publishes around-view monitor state for parking and display consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AVM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AVM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>BCW</code></h3>
+<p>Publishes blind-spot warning state for alert selection and driver warning output</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BCW_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BCW_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DMS</code></h3>
+<p>Publishes driver monitoring state so assist and warning logic can react to attention loss</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DMS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DMS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DMS_ATTENTION_TO_HWP_DRIVER_MONITOR_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DMS_ATTENTION_TO_HWP_DRIVER_MONITOR_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>FCA</code></h3>
+<p>Publishes forward-collision assist state and request feedback for braking and warning consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FCA_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FCA_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>OBJECT_RISK_TO_FCA_REQUEST_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/OBJECT_RISK_TO_FCA_REQUEST_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>FCAM</code></h3>
+<p>Publishes forward-camera perception state for object-risk and highway-ready decisions</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FCAM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FCAM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>OBJECT_INPUT_TO_FCAM_CAMERA_STATE_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/OBJECT_INPUT_TO_FCAM_CAMERA_STATE_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>FRADAR</code></h3>
+<p>Publishes front-radar perception state for object fusion and assist decisions</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FRADAR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_FRADAR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>OBJECT_RISK_TO_WARNING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/OBJECT_RISK_TO_WARNING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>HWP</code></h3>
+<p>Publishes highway-pilot readiness and state for driver-monitor, cluster, and assist consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_HWP_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_HWP_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DMS_ATTENTION_TO_HWP_DRIVER_MONITOR_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DMS_ATTENTION_TO_HWP_DRIVER_MONITOR_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>LCA</code></h3>
+<p>Publishes lane-change assist state for warning and driver-guidance outputs</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LCA_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LCA_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>LDR</code></h3>
+<p>Publishes lidar perception state for object fusion and path-readiness consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LDR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LDR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>OBJECT_SAFETY_TO_LDR_HEALTH_RANGE_BUCKET_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/OBJECT_SAFETY_TO_LDR_HEALTH_RANGE_BUCKET_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>LDWS_LKAS</code></h3>
+<p>Publishes lane-departure and lane-keeping state for warning and steering-support consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LDWS_LKAS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_LDWS_LKAS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>OMS</code></h3>
+<p>Publishes occupant-monitoring state for body safety and alert decisions</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_OMS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_OMS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>PKM</code></h3>
+<p>Publishes parking-master state for parking-assist orchestration and HMI visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PKM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PKM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>PUS</code></h3>
+<p>Publishes parking-ultrasonic state for parking assist and body or IVI readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PUS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PUS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>RPC</code></h3>
+<p>Publishes road-preview camera state for ADAS control-adaptation readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RPC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RPC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>RRM</code></h3>
+<p>Publishes rear-radar master state for surround awareness and warning selection</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RRM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RRM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>RSPA</code></h3>
+<p>Publishes remote smart parking-assist state for chassis, assist, and display consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RSPA_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RSPA_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SCC</code></h3>
+<p>SCC support behavior feeds ADAS and VCU rather than directly owning output HMI</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SCC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SCC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>RISK_LEVEL_TO_SCC_CRUISE_MODULATION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/RISK_LEVEL_TO_SCC_CRUISE_MODULATION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>SPAS</code></h3>
+<p>Publishes smart parking-assist state for steering-support and parking HMI consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SPAS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SPAS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SPM</code></h3>
+<p>Publishes surround parking-master state for parking coordination and HMI output</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SPM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SPM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>SRR_FL</code></h3>
+<p>Publishes front-left corner radar state for surround fusion and parking or lane-assist consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_FL_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_FL_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>MERGE_CONFLICT_TO_SRR_SIDE_RISK_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/MERGE_CONFLICT_TO_SRR_SIDE_RISK_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>SRR_FR</code></h3>
+<p>Publishes front-right corner radar state for surround fusion and parking or lane-assist consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_FR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_FR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ACCESS_AUTH_TO_DOOR_FR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ACCESS_AUTH_TO_DOOR_FR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SRR_RL</code></h3>
+<p>Publishes rear-left corner radar state for surround fusion and parking or lane-assist consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_RL_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_RL_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RL_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RL_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SRR_RR</code></h3>
+<p>Publishes rear-right corner radar state for surround fusion and parking or lane-assist consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_RR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRR_RR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>TRM</code></h3>
+<p>Publishes trailer-management state for ADAS and vehicle-state consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TRM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TRM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>Group 03 Display Warning Audio</h2>
+<p>The display and alert group turns selected warning state into visible, audible, and service-facing user output.</p>
+<ul>
+<li>Included domains: <code>Infotainment</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_03_DISPLAY_WARNING_AUDIO_2026-03-28.svg" /></p>
+<h3><code>AMP</code></h3>
+<p>Receives gated audio intent from IVI/BCM and renders the final alert volume</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AMP_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AMP_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_FOCUS_TO_AMP_DUCKING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_FOCUS_TO_AMP_DUCKING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>CLU</code></h3>
+<p>Consumes selected alert state and vehicle state to build cluster-facing output</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CLU_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CLU_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CLU_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CLU_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_POPUP_SYNC_TO_CLU_DUPLICATE_GUARD_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>CPAY</code></h3>
+<p>Publishes connected payment service state for IVI and service-surface readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CPAY_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CPAY_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DKEY</code></h3>
+<p>Publishes digital-key service state for IVI and access-service consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DKEY_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DKEY_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DKEY_ACCESS_TO_DOOR_FL_UNLOCK_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DKEY_ACCESS_TO_DOOR_FL_UNLOCK_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>HUD</code></h3>
+<p>Renders selected warning and driver-guidance state into the head-up display surface</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_HUD_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_HUD_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CLUSTER_WARNING_TO_HUD_WARNING_CODE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CLUSTER_WARNING_TO_HUD_WARNING_CODE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>IVI</code></h3>
+<p>Routes gated alert state into visible display, map, and audio focus paths</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_IVI_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_IVI_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_IVI_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_IVI_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>NAV</code></h3>
+<p>Publishes navigation context and route state for zone-aware warning and assist consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_NAV_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_NAV_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>NAV_STATE_TO_IVI_BACKBONE_NAV_CONTEXT_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/NAV_STATE_TO_IVI_BACKBONE_NAV_CONTEXT_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>OTA</code></h3>
+<p>Publishes over-the-air service state for IVI and backbone service visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_OTA_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_OTA_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>PAK</code></h3>
+<p>Publishes passive-access key state for service and access consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PAK_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PAK_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DIGITAL_KEY_AND_SIGNAL_BARS_TO_PAK_PROXIMITY_LATENCY_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DIGITAL_KEY_AND_SIGNAL_BARS_TO_PAK_PROXIMITY_LATENCY_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>PGS</code></h3>
+<p>Publishes parking-guidance system state for IVI and parking HMI readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PGS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PGS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>RSE</code></h3>
+<p>Publishes rear-seat entertainment state for infotainment service visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RSE_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RSE_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ALERT_CONTEXT_TO_IVI_WARNING_BEEP_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>TMU</code></h3>
+<p>Publishes telematics and remote-service state for IVI, climate, and navigation consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TMU_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TMU_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CONNECTIVITY_AND_IVI_HEALTH_TO_TMU_SERVICE_MODE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>VCS</code></h3>
+<p>Publishes voice and connected-speech state for audio and IVI service consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VCS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_VCS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AUDIO_FOCUS_TMU_NOTIF_TO_VCS_VOICE_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AUDIO_FOCUS_TMU_NOTIF_TO_VCS_VOICE_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>Group 04 Body Comfort Ambient</h2>
+<p>The body and comfort group amplifies warning context through lighting, entry, ambient, climate, and comfort-domain state.</p>
+<ul>
+<li>Included domains: <code>Body</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_04_BODY_COMFORT_AMBIENT_2026-03-28.svg" /></p>
+<h3><code>ADM</code></h3>
+<p>Publishes automatic door control state for body comfort and access surfaces</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ADM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ADM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>AFLS</code></h3>
+<p>Publishes adaptive front-lighting state for body lighting and driver-visibility consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AFLS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AFLS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AFLS_INPUT_TO_AHLS_HIGH_BEAM_PERMIT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AFLS_INPUT_TO_AHLS_HIGH_BEAM_PERMIT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>AHLS</code></h3>
+<p>Publishes automatic high-beam lighting state for body lighting and visibility surfaces</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AHLS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_AHLS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AFLS_INPUT_TO_AHLS_HIGH_BEAM_PERMIT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AFLS_INPUT_TO_AHLS_HIGH_BEAM_PERMIT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>BCM</code></h3>
+<p>Owns comfort and ambient outputs while bridging body leaf ECU state back to HMI</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BCM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BCM_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BCM_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BCM_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>BIO</code></h3>
+<p>Publishes biometric authentication state for access and security consumers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BIO_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BIO_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>BSEC</code></h3>
+<p>Publishes body security and alarm state for access, warning, and service visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BSEC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_BSEC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>CSM</code></h3>
+<p>Publishes cabin sensing state for access, security, and comfort decisions</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CSM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CSM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>DATC</code></h3>
+<p>Publishes HVAC and climate-control state for comfort-domain and telematics readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DATC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DATC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CABIN_AIR_TEMP_TO_DATC_DEFOG_VENT_MODE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CABIN_AIR_TEMP_TO_DATC_DEFOG_VENT_MODE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DOOR_FL</code></h3>
+<p>Publishes front-left door state for access, security, and comfort visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_FL_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_FL_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DKEY_ACCESS_TO_DOOR_FL_UNLOCK_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DKEY_ACCESS_TO_DOOR_FL_UNLOCK_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DOOR_FR</code></h3>
+<p>Publishes front-right door state for access, security, and comfort visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_FR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_FR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>ACCESS_AUTH_TO_DOOR_FR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/ACCESS_AUTH_TO_DOOR_FR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DOOR_RL</code></h3>
+<p>Publishes rear-left door state for access, security, and comfort visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_RL_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_RL_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RL_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RL_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DOOR_RR</code></h3>
+<p>Publishes rear-right door state for access, security, and comfort visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_RR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DOOR_RR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/CHILD_LOCK_AND_ACCESS_AUTH_TO_DOOR_RR_UNLOCK_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>HLM</code></h3>
+<p>Publishes headlamp-leveling state for lighting visibility and body diagnostics</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_HLM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_HLM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>MIR</code></h3>
+<p>Publishes mirror state for body comfort and driver-visibility surfaces</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MIR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MIR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>MSC</code></h3>
+<p>Publishes massage-seat control state for seat comfort and HMI visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MSC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_MSC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>SEAT_COMFORT_TO_MASSAGE_INTENSITY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/SEAT_COMFORT_TO_MASSAGE_INTENSITY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>PTG</code></h3>
+<p>Publishes power-tailgate state for access and body comfort visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PTG_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_PTG_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>RATC</code></h3>
+<p>Publishes rear-climate state for rear-cabin comfort and HMI readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RATC_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_RATC_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_LIGHTING_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>SEAT_DRV</code></h3>
+<p>Publishes driver-seat state for comfort control and HMI visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SEAT_DRV_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SEAT_DRV_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DRIVER_SEAT_CMD_TO_SEAT_DRV_POSITION_COMFORT_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DRIVER_SEAT_CMD_TO_SEAT_DRV_POSITION_COMFORT_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SEAT_PASS</code></h3>
+<p>Publishes passenger-seat state for comfort control and HMI visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SEAT_PASS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SEAT_PASS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>PASSENGER_SEAT_CMD_TO_SEAT_PASS_POSITION_COMFORT_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/PASSENGER_SEAT_CMD_TO_SEAT_PASS_POSITION_COMFORT_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SMK</code></h3>
+<p>Publishes smart-key and immobilizer state for access security and validation readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SMK_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SMK_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DIGITAL_KEY_AND_DRIVE_STATE_TO_SMK_AUTH_GATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DIGITAL_KEY_AND_DRIVE_STATE_TO_SMK_AUTH_GATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SRF</code></h3>
+<p>Publishes sunroof state for comfort control and body visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRF_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SRF_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/AMBIENT_MODE_TO_BCM_CABIN_LIGHT_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>TGM</code></h3>
+<p>Publishes tailgate state for body access and comfort visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TGM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TGM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DKEY_ACCESS_TO_TGM_TAILGATE_STATE_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DKEY_ACCESS_TO_TGM_TAILGATE_STATE_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>WIP</code></h3>
+<p>Publishes wiper state and diagnostics for body visibility and warning surfaces</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_WIP_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_WIP_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>RAIN_LIGHT_AND_WIPER_CMD_TO_WIPER_ANIM_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/RAIN_LIGHT_AND_WIPER_CMD_TO_WIPER_ANIM_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>Group 05 Validation Scenario</h2>
+<p>The validation group isolates scenario injection and verdict readback so test orchestration stays separate from normal feature ownership.</p>
+<ul>
+<li>Included domains: <code>ETH_Backbone</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_05_VALIDATION_SCENARIO_2026-03-28.svg" /></p>
+<h3><code>TEST_BAS</code></h3>
+<p>Aggregates scenario results and publishes baseline validation summaries</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TEST_BAS_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TEST_BAS_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>SCENARIO_LOCK_TO_MANUAL_OVERRIDE_RELEASE_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/SCENARIO_LOCK_TO_MANUAL_OVERRIDE_RELEASE_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>TEST_SCN</code></h3>
+<p>Scenario entry point for validation presets, stop/manual logic, and scenario verdict readback</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TEST_SCN_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TEST_SCN_2026-03-28_P2.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TEST_SCN_2026-03-28_P3.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_TEST_SCN_2026-03-28_P4.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>TMU_ACCESS_TO_DKEY_STATE_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/TMU_ACCESS_TO_DKEY_STATE_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<div style="page-break-before: always;"></div>
+
+<h2>Group 06 Backbone Gateway Diagnostics</h2>
+<p>The backbone and diagnostics group routes runtime state, service traffic, and external interfaces without becoming a hidden feature owner.</p>
+<ul>
+<li>Included domains: <code>ETH_Backbone</code></li>
+</ul>
+<p><img alt="" src="svg/GROUP_06_BACKBONE_GATEWAY_DIAGNOSTICS_2026-03-28.svg" /></p>
+<h3><code>CGW</code></h3>
+<p>Bridges domain outputs toward IVI, CLU, BCM, and AMP while enforcing gate logic</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CGW_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_CGW_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>NAV_AGE_TO_CGW_BOUNDARY_ROUTING_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/NAV_AGE_TO_CGW_BOUNDARY_ROUTING_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>DCM</code></h3>
+<p>Publishes diagnostic manager state for service routing and diagnostic visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DCM_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_DCM_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>BOUNDARY_ROUTE_CONTEXT_TO_DCM_SECURITY_SESSION_POLICY_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/BOUNDARY_ROUTE_CONTEXT_TO_DCM_SECURITY_SESSION_POLICY_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>EDR</code></h3>
+<p>Publishes event-data recorder state for fail-safe logging and service readers</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EDR_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EDR_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>FAILSAFE_MODE_TO_EDR_STORAGE_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/FAILSAFE_MODE_TO_EDR_STORAGE_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>ETHB</code></h3>
+<p>Publishes Ethernet backbone state for service routing and link-health visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ETHB_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_ETHB_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DIAG_STAGE_TO_ETHB_SERVICE_SECURITY_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DIAG_STAGE_TO_ETHB_SERVICE_SECURITY_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>EXT_DIAG</code></h3>
+<p>Publishes external diagnostic session state for service routing and workshop ingress</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EXT_DIAG_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_EXT_DIAG_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>DIAG_ROUTE_OWNER_TO_GATEWAY_OPEN_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/DIAG_ROUTE_OWNER_TO_GATEWAY_OPEN_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>IBOX</code></h3>
+<p>Publishes in-vehicle connectivity hub state for service-link visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_IBOX_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_IBOX_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>NAV_AND_FAILSAFE_CONTEXT_TO_IBOX_ROUTE_SERVICE_FLAGS_SIGNAL_FLOW_2026-03-29</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/NAV_AND_FAILSAFE_CONTEXT_TO_IBOX_ROUTE_SERVICE_FLAGS_SIGNAL_FLOW_2026-03-29.svg" /></p>
+<h3><code>SGW</code></h3>
+<p>Publishes secure-gateway state for service routing and access-control visibility</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SGW_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_SGW_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>SERVICE_CONTEXT_TO_SGW_ROUTE_OWNER_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/SERVICE_CONTEXT_TO_SGW_ROUTE_OWNER_SIGNAL_FLOW_2026-03-28.svg" /></p>
+<h3><code>V2X</code></h3>
+<p>Owns emergency ingress context before ADAS and CGW perform prioritization</p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_V2X_2026-03-28.svg" /></p>
+<p><img alt="" src="svg/ecu_cards/ECU_CARD_V2X_2026-03-28_P2.svg" /></p>
+<ul>
+<li>Representative detailed signal flow: <code>V2X_PRIORITY_ARBITRATION_SIGNAL_FLOW_2026-03-28</code></li>
+</ul>
+<p><img alt="" src="svg/flows/signal/V2X_PRIORITY_ARBITRATION_SIGNAL_FLOW_2026-03-28.svg" /></p>
+    </article>
+  </main>
+</body>
+</html>

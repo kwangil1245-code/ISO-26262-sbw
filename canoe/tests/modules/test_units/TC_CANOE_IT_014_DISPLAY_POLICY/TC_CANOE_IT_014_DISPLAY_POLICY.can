@@ -1,0 +1,37 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_IT_014_DISPLAY_POLICY()
+{
+  testStepPass("doc-trace", "IT_014 - 경보 표시 방식 설정 반영 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(215, 900, 1700))
+  {
+    return;
+  }
+
+  if (!waitForStableWarningRender(deriveExpectedEmergencyWarningCode(1, 2, 11, 40), 2, 1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("display-policy-level", 6, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("display-policy-type", 1, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("display-policy-code", deriveExpectedEmergencyWarningCode(1, 2, 11, 40), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntEq("display-policy-direction", 2, (long)@UiRender::renderDirection, "renderDirection");
+
+  testStepPass("doc-pass", "PASS - IT_014 - 경보 표시 방식 설정 반영 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

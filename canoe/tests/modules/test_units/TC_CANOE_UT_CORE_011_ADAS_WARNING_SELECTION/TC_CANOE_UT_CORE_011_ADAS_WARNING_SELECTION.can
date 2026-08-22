@@ -1,0 +1,38 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_UT_CORE_011_ADAS_WARNING_SELECTION()
+{
+  testStepPass("doc-trace", "UT_011 - 긴급 경고와 일반 경고가 겹칠 때 우선순위를 결정");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(207, 700, 1200))
+  {
+    return;
+  }
+  if (!waitForCoreSelectedAlertState(3, 3, 800) ||
+      !waitForCoreBoundaryState(-1, -1, 0, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("selected-alert-level", 3, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("selected-alert-type", 3, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("warning-path-status", 0, (long)@CoreState::warningPathStatus, "warningPathStatus");
+  assertIntEq("fail-safe-clear", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - UT_011 - 긴급 경고와 일반 경고가 겹칠 때 우선순위를 결정");
+  resetValidationHarnessIfNeeded();
+}

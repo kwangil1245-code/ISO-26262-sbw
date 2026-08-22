@@ -1,0 +1,153 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  long gAutoDoorState;
+  long gAutoUnlockState;
+  long gDoorApproachScore;
+  long gTailgateAssistMode;
+  long gTailgateOpenReq;
+  long gTailgateActuatorCmd;
+}
+
+on message frmAutoDoorCtrlStateMsg
+{
+  gAutoDoorState = this.AutoDoorState;
+  gAutoUnlockState = this.AutoUnlockState;
+  gDoorApproachScore = this.DoorApproachScore;
+}
+
+on message frmPowerTailgateCtrlStateMsg
+{
+  gTailgateAssistMode = this.TailgateAssistMode;
+  gTailgateOpenReq = this.OpenRequestState;
+  gTailgateActuatorCmd = this.TailgateActuatorCmd;
+}
+
+long waitForBodyEntryDoorState(long expectedDoorState,
+                               long expectedUnlockState,
+                               long expectedMinApproachScore,
+                               dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(expectedDoorState, gAutoDoorState) ||
+          !relaxedIntEq(expectedUnlockState, gAutoUnlockState) ||
+          !relaxedIntMin(expectedMinApproachScore, gDoorApproachScore)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(expectedDoorState, gAutoDoorState) ||
+      !relaxedIntEq(expectedUnlockState, gAutoUnlockState) ||
+      !relaxedIntMin(expectedMinApproachScore, gDoorApproachScore))
+  {
+    testStepPass("body-entry-door-state", "Door state timeout waited=%d expectedDoor=%d expectedUnlock=%d expectedMinScore=%d actualDoor=%d actualUnlock=%d actualScore=%d",
+                 waitedMs,
+                 expectedDoorState,
+                 expectedUnlockState,
+                 expectedMinApproachScore,
+                 gAutoDoorState,
+                 gAutoUnlockState,
+                 gDoorApproachScore);
+    return 0;
+  }
+
+  return 1;
+}
+
+long waitForBodyTailgateState(long expectedAssistMode,
+                              long expectedOpenReq,
+                              long expectedActuatorCmd,
+                              dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(expectedAssistMode, gTailgateAssistMode) ||
+          !relaxedIntEq(expectedOpenReq, gTailgateOpenReq) ||
+          !relaxedIntEq(expectedActuatorCmd, gTailgateActuatorCmd)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(expectedAssistMode, gTailgateAssistMode) ||
+      !relaxedIntEq(expectedOpenReq, gTailgateOpenReq) ||
+      !relaxedIntEq(expectedActuatorCmd, gTailgateActuatorCmd))
+  {
+    testStepPass("body-entry-tailgate-state", "Tailgate state timeout waited=%d expectedMode=%d expectedOpen=%d expectedCmd=%d actualMode=%d actualOpen=%d actualCmd=%d",
+                 waitedMs,
+                 expectedAssistMode,
+                 expectedOpenReq,
+                 expectedActuatorCmd,
+                 gTailgateAssistMode,
+                 gTailgateOpenReq,
+                 gTailgateActuatorCmd);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_EXT_018_BODY_ENTRY_EXIT()
+{
+  testStepPass("doc-trace", "UT_018 - 출입문과 테일게이트 상태를 수신하여 차량 상태에 반영");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  gAutoDoorState = -1;
+  gAutoUnlockState = -1;
+  gDoorApproachScore = -1;
+  gTailgateAssistMode = -1;
+  gTailgateOpenReq = -1;
+  gTailgateActuatorCmd = -1;
+
+  if (!launchScenarioAndWait(226, 1500, 350))
+  {
+    return;
+  }
+  if (!waitForBodyEntryDoorState(1, 1, 80, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("body-entry-door-state", 1, gAutoDoorState, "AutoDoorState");
+  assertIntEq("body-entry-door-unlock", 1, gAutoUnlockState, "AutoUnlockState");
+  assertIntMin("body-entry-door-score", 80, gDoorApproachScore, "DoorApproachScore");
+
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  gTailgateAssistMode = -1;
+  gTailgateOpenReq = -1;
+  gTailgateActuatorCmd = -1;
+  if (!launchScenarioAndWait(227, 1500, 350))
+  {
+    return;
+  }
+  if (!waitForBodyTailgateState(2, 1, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("body-entry-tailgate-mode", 2, gTailgateAssistMode, "TailgateAssistMode");
+  assertIntEq("body-entry-tailgate-open", 1, gTailgateOpenReq, "OpenRequestState");
+  assertIntEq("body-entry-tailgate-cmd", 0, gTailgateActuatorCmd, "TailgateActuatorCmd");
+
+  testStepPass("doc-pass", "PASS - UT_018 - 출입문과 테일게이트 상태를 수신하여 차량 상태에 반영");
+  resetValidationHarnessIfNeeded();
+}

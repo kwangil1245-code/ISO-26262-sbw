@@ -1,0 +1,72 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_UT_EXT_007_CLU_CONTEXT_ADJUST()
+{
+  testStepPass("doc-trace", "UT_007 - 운전자 상태와 차량 맥락을 반영하여 경고 표시와 안내를 보정");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(214, 900, 1300))
+  {
+    return;
+  }
+
+  if (!waitForCoreSelectedAlertState(5, 3, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("clu-seatbelt-level", 5, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("clu-seatbelt-type", 3, getCanonicalSelectedAlertType(), "selectedAlertType");
+
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(215, 900, 1300))
+  {
+    return;
+  }
+
+  if (!waitForStableWarningRender(deriveExpectedEmergencyWarningCode(1, 2, 11, 40), 2, 1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("clu-policy-code", deriveExpectedEmergencyWarningCode(1, 2, 11, 40), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntEq("clu-policy-direction", 2, (long)@UiRender::renderDirection, "renderDirection");
+
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(222, 900, 1300))
+  {
+    return;
+  }
+
+  if (!waitForStableDistanceHistory(180, deriveExpectedEmergencyWarningCode(1, 2, 9, 72), 1, 1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("clu-distance-code", deriveExpectedEmergencyWarningCode(1, 2, 9, 72), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntEq("clu-distance-m", 180, (long)@CoreState::emergencyDistanceM, "emergencyDistanceM");
+
+  testStepPass("doc-pass", "PASS - UT_007 - 운전자 상태와 차량 맥락을 반영하여 경고 표시와 안내를 보정");
+  resetValidationHarnessIfNeeded();
+}

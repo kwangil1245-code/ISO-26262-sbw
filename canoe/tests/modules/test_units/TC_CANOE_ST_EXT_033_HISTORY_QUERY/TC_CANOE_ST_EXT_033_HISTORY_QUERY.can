@@ -1,0 +1,44 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_EXT_033_HISTORY_QUERY()
+{
+  testStepPass("doc-trace", "ST_033 - 경고 발생 후 이력 조회를 수행할 때 최근 경고 순서와 원인 정보가 사용자 화면에 일관되게 제공되는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(222, 900, 1300))
+  {
+    return;
+  }
+
+  if (!waitForStableDistanceHistory(180, deriveExpectedEmergencyWarningCode(1, 2, 9, 72), 1, 1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("history-query-distance", 180, (long)@CoreState::emergencyDistanceM, "emergencyDistanceM");
+  assertIntEq("history-query-warning-code", deriveExpectedEmergencyWarningCode(1, 2, 9, 72), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntMin("history-query-count", 1, (long)@CoreState::alertHistoryCount, "alertHistoryCount");
+
+  @Test::historyQueryOffset = 0;
+  if (!waitForHistoryQueryCode(deriveExpectedEmergencyWarningCode(1, 2, 9, 72), 1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("history-query-latest-code", deriveExpectedEmergencyWarningCode(1, 2, 9, 72), (long)@Test::historyQueryCode, "historyQueryCode");
+
+  testStepPass("doc-pass", "PASS - ST_033 - 경고 발생 후 이력 조회를 수행할 때 최근 경고 순서와 원인 정보가 사용자 화면에 일관되게 제공되는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}

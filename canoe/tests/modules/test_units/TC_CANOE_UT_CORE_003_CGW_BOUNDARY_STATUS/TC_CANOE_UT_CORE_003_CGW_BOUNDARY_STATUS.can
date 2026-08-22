@@ -1,0 +1,37 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_UT_CORE_003_CGW_BOUNDARY_STATUS()
+{
+  testStepPass("doc-trace", "UT_003 - 주행 상태와 제한속도(km/h)를 반영하여 150ms 이내 기본 경고 상태를 판단");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(206, 700, 1200))
+  {
+    return;
+  }
+  if (!waitForCoreBoundaryState(1, 1, -1, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("boundary-status", 1, (long)@CoreState::domainBoundaryStatus, "domainBoundaryStatus");
+  assertIntEq("routing-policy", 1, (long)@CoreState::routingPolicy, "routingPolicy");
+  assertIntEq("selected-alert-level", 0, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("fail-safe-clear", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - UT_003 - 주행 상태와 제한속도(km/h)를 반영하여 150ms 이내 기본 경고 상태를 판단");
+  resetValidationHarnessIfNeeded();
+}

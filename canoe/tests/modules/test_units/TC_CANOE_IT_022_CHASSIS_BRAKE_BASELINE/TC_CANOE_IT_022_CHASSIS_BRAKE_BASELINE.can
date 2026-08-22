@@ -1,0 +1,37 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_IT_022_CHASSIS_BRAKE_BASELINE()
+{
+  testStepPass("doc-trace", "IT_022 - 제동 입력 기준 chassis 상태 반영 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(219, 1500, 2200))
+  {
+    return;
+  }
+  if (!waitForCoreChassisState(0, 0, 20, -1, 1600))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("chassis-brake-drive-state", 0, (long)@Core::driveStateNorm, "driveStateNorm");
+  assertIntEq("chassis-brake-speed", 0, (long)@Core::vehicleSpeedNorm, "vehicleSpeedNorm");
+  assertIntEq("chassis-brake-steer", 0, (long)@Core::steeringInputNorm, "steeringInputNorm");
+  assertIntMin("chassis-brake-pedal", 20, (long)@Core::brakePedalNorm, "brakePedalNorm");
+
+  testStepPass("doc-pass", "PASS - IT_022 - 제동 입력 기준 chassis 상태 반영 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

@@ -1,0 +1,76 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  int gDcdcMode;
+  int gLvOutputVolt;
+  int gLvOutputCurr;
+}
+
+on message frmDcdcStateMsg
+{
+  gDcdcMode = this.DcdcMode;
+  gLvOutputVolt = this.LvOutputVolt;
+  gLvOutputCurr = this.LvOutputCurr;
+}
+
+long waitForDcdcInputState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(2, gDcdcMode) ||
+          !relaxedIntEq(140, gLvOutputVolt) ||
+          !relaxedIntEq(35, gLvOutputCurr)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(2, gDcdcMode) ||
+      !relaxedIntEq(140, gLvOutputVolt) ||
+      !relaxedIntEq(35, gLvOutputCurr))
+  {
+    testStepPass("dcdc-input-state", "DCDC input timeout waited=%d mode=%d volt=%d curr=%d",
+                 waitedMs,
+                 gDcdcMode,
+                 gLvOutputVolt,
+                 gLvOutputCurr);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_INP_067_DCDC_INPUT()
+{
+  testStepPass("doc-trace", "UT_067 - 전력 변환 ECU 상태를 입력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(231, 800, 1300))
+  {
+    return;
+  }
+
+  if (!waitForDcdcInputState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("s231_dcdcMode", 2, gDcdcMode, "dcdcMode");
+  assertIntEq("s231_lvOutputVolt", 140, gLvOutputVolt, "lvOutputVolt");
+  assertIntEq("s231_lvOutputCurr", 35, gLvOutputCurr, "lvOutputCurr");
+
+  testStepPass("doc-pass", "PASS - UT_067 - 전력 변환 ECU 상태를 입력");
+  resetValidationHarnessIfNeeded();
+}

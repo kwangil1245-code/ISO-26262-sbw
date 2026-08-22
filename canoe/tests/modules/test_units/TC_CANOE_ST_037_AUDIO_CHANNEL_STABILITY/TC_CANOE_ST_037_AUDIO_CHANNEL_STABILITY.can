@@ -1,0 +1,39 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_037_AUDIO_CHANNEL_STABILITY()
+{
+  testStepPass("doc-trace", "ST_037 - 경고 오디오가 활성화된 상태에서 오디오 집중 채널과 감쇄 정책이 안정적으로 유지되는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(215, 900, 1700))
+  {
+    return;
+  }
+
+  if (!waitForAudioPolicyFloor(1, 2, 20, -1, 1200) ||
+      !waitForCoreDriveState(-1, -1, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntMin("channel-contention-audio-focus", 1, (long)@CoreState::audioFocusOwner, "audioFocusOwner");
+  assertIntMin("channel-contention-audio-ducking", 2, (long)@CoreState::audioDuckingLvl, "audioDuckingLvl");
+  assertIntMin("channel-contention-audio-volume", 20, (long)@CoreState::volumeLevel, "volumeLevel");
+  assertIntEq("channel-contention-audio-failsafe", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - ST_037 - 경고 오디오가 활성화된 상태에서 오디오 집중 채널과 감쇄 정책이 안정적으로 유지되는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}

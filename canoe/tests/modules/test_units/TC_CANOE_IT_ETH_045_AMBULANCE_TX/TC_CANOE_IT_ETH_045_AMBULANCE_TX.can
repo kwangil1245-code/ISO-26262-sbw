@@ -1,0 +1,46 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+/*
+  IT_045
+  Integration-level external TX path for ambulance emergency propagation.
+  Periodicity closure remains Ethernet-trace gated.
+*/
+export testcase TC_CANOE_IT_ETH_045_AMBULANCE_TX()
+{
+  testStepPass("doc-trace", "IT_045 - 구급 긴급 알림 송신 경로 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(5, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForObservedSelectedAlertState(7, 2, 800) ||
+      !waitForObservedFailSafe(1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("it-ambulance-tx-context", 2, (long)@Core::emergencyContext, "emergencyContext");
+  assertIntEq("it-ambulance-tx-observed-context", 2, (long)@Test::obsEmergencyContext, "ethEmergencyContext");
+  assertIntEq("it-ambulance-tx-alert-state", 1, (long)@V2X::alertState, "alertState");
+  assertIntEq("it-ambulance-tx-emergency-type", 2, (long)@V2X::emergencyType, "emergencyType");
+  assertIntEq("it-ambulance-tx-level", 7, (long)@Test::obsSelectedAlertLevel, "ethSelectedAlertLevel");
+  assertIntEq("it-ambulance-tx-type", 2, (long)@Test::obsSelectedAlertType, "ethSelectedAlertType");
+  assertIntEq("it-ambulance-tx-failsafe", 0, (long)@Test::obsFailSafeMode, "ethFailSafeMode");
+
+  testStepPass("doc-pass", "PASS - IT_045 - 구급 긴급 알림 송신 경로 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

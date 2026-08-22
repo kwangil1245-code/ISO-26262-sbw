@@ -1,0 +1,39 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_IT_V2_009_TIMEOUT_CLEAR()
+{
+  testStepPass("doc-trace", "IT_009 - 긴급 종료 신호 및 미수신 시 안전 해제와 복귀 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(35, 1800, 2300))
+  {
+    return;
+  }
+
+  if (!waitForObservedSelectedAlertState(3, 3, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("selected-alert-level", 3, (long)@Test::obsSelectedAlertLevel, "ethSelectedAlertLevel");
+  assertIntEq("selected-alert-type", 3, (long)@Test::obsSelectedAlertType, "ethSelectedAlertType");
+  assertIntEq("emergency-context-observed-cleared", 0, (long)@Test::obsEmergencyContext, "ethEmergencyContext");
+  assertIntEq("fail-safe-observed-clear", 0, (long)@Test::obsFailSafeMode, "ethFailSafeMode");
+  assertIntEq("emergency-context-cleared", 0, (long)@Core::emergencyContext, "emergencyContext");
+  assertIntEq("fail-safe-clear", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - IT_009 - 긴급 종료 신호 및 미수신 시 안전 해제와 복귀 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

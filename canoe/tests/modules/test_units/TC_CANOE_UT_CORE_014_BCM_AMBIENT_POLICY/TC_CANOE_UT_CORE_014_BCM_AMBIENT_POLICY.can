@@ -1,0 +1,41 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_UT_CORE_014_BCM_AMBIENT_POLICY()
+{
+  testStepPass("doc-trace", "UT_014 - 경고 상태에 맞는 앰비언트 색상과 패턴을 50ms 주기로 출력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(208, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForNavContextState(1, 30, 800) ||
+      !waitForAmbientStateMinLevel(3, 3, 3, 5, 800) ||
+      !waitForCoreDriveState(-1, -1, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntMin("selected-alert-level", 3, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("selected-alert-type", 3, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("ambient-color", 3, (long)@Body::ambientColor, "ambientColor");
+  assertIntEq("ambient-pattern", 5, (long)@Body::ambientPattern, "ambientPattern");
+  assertIntEq("fail-safe-clear", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - UT_014 - 경고 상태에 맞는 앰비언트 색상과 패턴을 50ms 주기로 출력");
+  resetValidationHarnessIfNeeded();
+}

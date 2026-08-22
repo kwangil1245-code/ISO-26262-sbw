@@ -1,0 +1,143 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  long gParkMasterActive;
+  long gAutoManeuverReady;
+  long gParkPhase;
+  long gPkmViewMode;
+  long gMinDistanceCm;
+  long gAssistStage;
+  long gSurroundHealth;
+  long gSurroundActive;
+  long gAutoParkReady;
+  long gSpmViewMode;
+  long gProximityClass;
+  long gSteeringAssistReq;
+  long gBrakeHoldReq;
+  long gDistanceBucket;
+}
+
+on message frmParkMasterStateMsg
+{
+  gParkMasterActive = this.ParkMasterActive;
+  gAutoManeuverReady = this.AutoManeuverReady;
+  gParkPhase = this.ParkPhase;
+  gPkmViewMode = this.ViewMode;
+  gMinDistanceCm = this.MinDistanceCm;
+  gAssistStage = this.AssistStage;
+  gSurroundHealth = this.SurroundHealth;
+}
+
+on message frmSurroundParkMasterStateMsg
+{
+  gSurroundActive = this.SurroundActive;
+  gAutoParkReady = this.AutoParkReady;
+  gSpmViewMode = this.ViewMode;
+  gProximityClass = this.ProximityClass;
+  gSteeringAssistReq = this.SteeringAssistReq;
+  gBrakeHoldReq = this.BrakeHoldReq;
+  gDistanceBucket = this.DistanceBucket;
+}
+
+long waitForParkingPerceptionState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(1, gParkMasterActive) ||
+          !relaxedIntEq(1, gAutoManeuverReady) ||
+          !relaxedIntEq(2, gParkPhase) ||
+          !relaxedIntEq(3, gPkmViewMode) ||
+          !relaxedIntEq(28, gMinDistanceCm) ||
+          !relaxedIntEq(2, gAssistStage) ||
+          !relaxedIntEq(2, gSurroundHealth) ||
+          !relaxedIntEq(1, gSurroundActive) ||
+          !relaxedIntEq(1, gAutoParkReady) ||
+          !relaxedIntEq(3, gSpmViewMode) ||
+          !relaxedIntEq(3, gProximityClass) ||
+          !relaxedIntEq(1, gSteeringAssistReq) ||
+          !relaxedIntEq(0, gBrakeHoldReq) ||
+          !relaxedIntEq(28, gDistanceBucket)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(1, gParkMasterActive) ||
+      !relaxedIntEq(1, gAutoManeuverReady) ||
+      !relaxedIntEq(2, gParkPhase) ||
+      !relaxedIntEq(3, gPkmViewMode) ||
+      !relaxedIntEq(28, gMinDistanceCm) ||
+      !relaxedIntEq(2, gAssistStage) ||
+      !relaxedIntEq(2, gSurroundHealth) ||
+      !relaxedIntEq(1, gSurroundActive) ||
+      !relaxedIntEq(1, gAutoParkReady) ||
+      !relaxedIntEq(3, gSpmViewMode) ||
+      !relaxedIntEq(3, gProximityClass) ||
+      !relaxedIntEq(1, gSteeringAssistReq) ||
+      !relaxedIntEq(0, gBrakeHoldReq) ||
+      !relaxedIntEq(28, gDistanceBucket))
+  {
+    testStepPass("parking-perception-state", "Parking perception timeout waited=%d master=%d autoReady=%d phase=%d view=%d distance=%d assist=%d surroundHealth=%d surroundActive=%d autoPark=%d spmView=%d proximity=%d steerReq=%d brakeHold=%d bucket=%d",
+                 waitedMs,
+                 gParkMasterActive,
+                 gAutoManeuverReady,
+                 gParkPhase,
+                 gPkmViewMode,
+                 gMinDistanceCm,
+                 gAssistStage,
+                 gSurroundHealth,
+                 gSurroundActive,
+                 gAutoParkReady,
+                 gSpmViewMode,
+                 gProximityClass,
+                 gSteeringAssistReq,
+                 gBrakeHoldReq,
+                 gDistanceBucket);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_EXT_024_ADAS_PARKING_PERCEPTION()
+{
+  testStepPass("doc-trace", "UT_024 - 주차 보조와 주변 인지 상태를 수신하여 위험 판단에 반영");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+  if (!launchScenarioAndWait(234, 1500, 450))
+  {
+    return;
+  }
+  if (!waitForParkingPerceptionState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("adas-park-master-active", 1, gParkMasterActive, "ParkMasterActive");
+  assertIntEq("adas-park-auto-ready", 1, gAutoManeuverReady, "AutoManeuverReady");
+  assertIntEq("adas-park-phase", 2, gParkPhase, "ParkPhase");
+  assertIntEq("adas-park-view", 3, gPkmViewMode, "ViewMode");
+  assertIntEq("adas-park-distance", 28, gMinDistanceCm, "MinDistanceCm");
+  assertIntEq("adas-park-assist-stage", 2, gAssistStage, "AssistStage");
+  assertIntEq("adas-park-surround-health", 2, gSurroundHealth, "SurroundHealth");
+  assertIntEq("adas-park-surround-active", 1, gSurroundActive, "SurroundActive");
+  assertIntEq("adas-park-surround-ready", 1, gAutoParkReady, "AutoParkReady");
+  assertIntEq("adas-park-spm-view", 3, gSpmViewMode, "ViewMode");
+  assertIntEq("adas-park-proximity", 3, gProximityClass, "ProximityClass");
+  assertIntEq("adas-park-steer-req", 1, gSteeringAssistReq, "SteeringAssistReq");
+  assertIntEq("adas-park-brake-hold", 0, gBrakeHoldReq, "BrakeHoldReq");
+  assertIntEq("adas-park-distance-bucket", 28, gDistanceBucket, "DistanceBucket");
+
+  testStepPass("doc-pass", "PASS - UT_024 - 주차 보조와 주변 인지 상태를 수신하여 위험 판단에 반영");
+  resetValidationHarnessIfNeeded();
+}

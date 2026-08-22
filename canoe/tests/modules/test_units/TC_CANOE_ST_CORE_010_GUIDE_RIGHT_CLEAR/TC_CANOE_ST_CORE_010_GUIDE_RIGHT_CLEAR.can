@@ -1,0 +1,56 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_CORE_010_GUIDE_RIGHT_CLEAR()
+{
+  testStepPass("doc-trace", "ST_010 - 유도 구간에서 우회전 안내가 들어오면 우측 방향 정보와 경고 안내가 표시되고 종료 후 기본 상태로 복귀되는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(8, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForNavContextState(4, -1, 800) ||
+      !waitForCoreSelectedAlertState(2, 6, 800) ||
+      !waitForStableWarningRender(32, -1, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st010-guide-level", 2, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("st010-guide-type", 6, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("st010-guide-code", 32, (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntEq("st010-guide-ambient-pattern", 3, (long)@Body::ambientPattern, "ambientPattern");
+
+  if (!launchScenarioAndWait(1, 700, 1000))
+  {
+    return;
+  }
+
+  if (!waitForCoreSelectedAlertState(0, 0, 800) ||
+      !waitForStableWarningRender(0, -1, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st010-clear-level", 0, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("st010-clear-type", 0, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("st010-clear-code", 0, (long)@Cluster::warningTextCode, "warningTextCode");
+
+  testStepPass("doc-pass", "PASS - ST_010 - 유도 구간에서 우회전 안내가 들어오면 우측 방향 정보와 경고 안내가 표시되고 종료 후 기본 상태로 복귀되는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1152" viewBox="0 0 1600 1152">
+  <defs>
+    <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <style>
+    .bg { fill: #f7f7f5; }
+    .title { font: 700 32px 'Segoe UI', sans-serif; fill: #0f172a; }
+    .sub { font: 500 16px 'Segoe UI', sans-serif; fill: #475569; }
+    .label { font: 700 19px 'Segoe UI', sans-serif; fill: #0f172a; }
+    .text { font: 600 16px 'Segoe UI', sans-serif; fill: #1f2937; }
+    .small { font: 500 14px 'Segoe UI', sans-serif; fill: #475569; }
+    .heroRole { font: 700 23px 'Segoe UI', sans-serif; fill: #111827; }
+    .statement { font: 700 26px 'Segoe UI', sans-serif; fill: #111827; }
+    .node { font: 700 19px 'Segoe UI', sans-serif; fill: #111827; }
+    .box { rx: 22; ry: 22; stroke: #334155; stroke-width: 1.6; }
+    .lane { stroke: #64748b; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <rect x="0" y="0" width="1600" height="1152" class="bg"/>
+  <text x="34" y="44" class="title">ECU Reference - CDC</text>
+  <text x="34" y="72" class="sub">p2 | runtime inventory, anchors, and linked ECU bank</text>
+  <rect x="30" y="100" width="1540" height="232" class="box" fill="url(#heroGradient)"/> <text x="52" y="134" class="small">Reference | p2</text> <text x="52" y="172" class="title">CDC</text> <text x="52" y="202" class="text">Group 01 Base Vehicle Dynamics | Chassis</text> <text x="52" y="228" class="small">Role focus</text> <text x="52" y="248" class="heroRole">damping-control state and diagnostics</text> <rect x="1034" y="134" width="250" height="82" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="1052" y="162" class="small">Rx msgs</text>
+<text x="1052" y="192" class="node">1</text> <rect x="1298" y="134" width="250" height="82" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="1316" y="162" class="small">Tx msgs</text>
+<text x="1316" y="192" class="node">2</text> <rect x="1034" y="228" width="250" height="82" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="1052" y="256" class="small">Linked ECU</text>
+<text x="1052" y="286" class="node">2</text> <rect x="1298" y="228" width="250" height="82" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="1316" y="256" class="small">Owner seams</text>
+<text x="1316" y="286" class="node">0</text>
+  <rect x="30" y="350" width="1540" height="142" class="box" fill="#fff7ed"/>
+<text x="52" y="384" class="small">What this ECU does</text>
+<text x="52" y="426" class="statement">Publishes damping-control state and diagnostics for chassis health and</text>
+<text x="52" y="452" class="statement">adaptation readers</text>
+  <rect x="30" y="510" width="760" height="148" class="box" fill="#e0f2fe"/>
+<text x="52" y="546" class="label">Inbound / Rx messages</text>
+<text x="52" y="582" class="text">CDC Diagnostic Request</text>
+<text x="52" y="604" class="small">frmCdcDiagReqMsg</text>
+<rect x="810" y="510" width="760" height="202" class="box" fill="#dbeafe"/>
+<text x="832" y="546" class="label">Outbound / Tx messages</text>
+<text x="832" y="582" class="text">CDC Diagnostic Res</text>
+<text x="832" y="604" class="small">frmCdcDiagResMsg</text>
+<line x1="832" y1="626" x2="1548" y2="626" stroke="#e2e8f0" stroke-width="1.0"/>
+<text x="832" y="636" class="text">CDC State</text>
+<text x="832" y="658" class="small">frmCdcStateMsg</text>
+<rect x="30" y="730" width="630" height="306" class="box" fill="#ffffff"/>
+<text x="52" y="766" class="label">Runtime anchors</text>
+<rect x="52" y="784" width="284" height="110" rx="18" ry="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="70" y="812" class="small">Lead test asset</text>
+<text x="70" y="838" class="small">UT_INP_035_CDC</text>
+<text x="70" y="856" class="small">covers chassis health</text>
+<rect x="354" y="784" width="284" height="110" rx="18" ry="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="372" y="812" class="small">Owner seam</text>
+<text x="372" y="836" class="small">-</text>
+<rect x="52" y="912" width="586" height="102" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="70" y="940" class="small">Linked sysvars</text>
+<text x="70" y="964" class="small">-</text>
+<rect x="680" y="730" width="890" height="372" class="box" fill="#eff6ff"/>
+<text x="702" y="766" class="label">Linked ECU bank</text>
+<text x="702" y="794" class="small">2 linked ECU</text>
+<text x="702" y="814" class="small">Upstream 1 | Downstream 2</text>
+<rect x="702" y="852" width="846" height="106" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="720" y="880" class="small">ADAS · 1 ECU</text>
+<rect x="995" y="896" width="260" height="34" rx="14" ry="14" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.2"/>
+<text x="1125.0" y="918" text-anchor="middle" class="small">ADAS</text>
+<rect x="702" y="974" width="846" height="106" rx="18" ry="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+<text x="720" y="1002" class="small">ETH Backbone · 1 ECU</text>
+<rect x="995" y="1018" width="260" height="34" rx="14" ry="14" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.2"/>
+<text x="1125.0" y="1040" text-anchor="middle" class="small">TEST_SCN</text>
+</svg>

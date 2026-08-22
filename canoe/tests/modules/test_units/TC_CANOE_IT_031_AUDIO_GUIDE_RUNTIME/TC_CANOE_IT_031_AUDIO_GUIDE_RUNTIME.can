@@ -1,0 +1,38 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_IT_031_AUDIO_GUIDE_RUNTIME()
+{
+  testStepPass("doc-trace", "IT_031 - 오디오 동시 실행 환경에서 경고 인지성 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(215, 900, 1700))
+  {
+    return;
+  }
+
+  if (!waitForStableWarningRender(deriveExpectedEmergencyWarningCode(1, 2, 11, 40), 2, 1800) ||
+      !waitForAudioPolicyFloor(1, 2, 20, 0, 1800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("audio-runtime-warning-code", deriveExpectedEmergencyWarningCode(1, 2, 11, 40), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntMin("audio-runtime-focus-owner", 1, (long)@CoreState::audioFocusOwner, "audioFocusOwner");
+  assertIntMin("audio-runtime-ducking", 2, (long)@CoreState::audioDuckingLvl, "audioDuckingLvl");
+  assertIntEq("audio-runtime-popup-active", 0, (long)@CoreState::popupActive, "popupActive");
+
+  testStepPass("doc-pass", "PASS - IT_031 - 오디오 동시 실행 환경에서 경고 인지성 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

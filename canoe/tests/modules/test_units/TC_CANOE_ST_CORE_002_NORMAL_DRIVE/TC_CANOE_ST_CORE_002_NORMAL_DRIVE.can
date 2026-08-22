@@ -1,0 +1,38 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_CORE_002_NORMAL_DRIVE()
+{
+  testStepPass("doc-trace", "ST_002 - 일반 구간 정상 주행 중에는 경고가 발생하지 않고 기본 표시가 안정적으로 유지되는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(14, 700, 1000))
+  {
+    return;
+  }
+  if (!waitForCoreDriveState(3, -1, -1, 800) ||
+      !waitForCoreSelectedAlertState(0, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st002-drive-state", 3, (long)@Core::driveStateNorm, "driveStateNorm");
+  assertIntEq("st002-boundary", 1, (long)@CoreState::domainBoundaryStatus, "domainBoundaryStatus");
+  assertIntEq("st002-routing", 1, (long)@CoreState::routingPolicy, "routingPolicy");
+  assertIntEq("st002-level", 0, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+
+  testStepPass("doc-pass", "PASS - ST_002 - 일반 구간 정상 주행 중에는 경고가 발생하지 않고 기본 표시가 안정적으로 유지되는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}

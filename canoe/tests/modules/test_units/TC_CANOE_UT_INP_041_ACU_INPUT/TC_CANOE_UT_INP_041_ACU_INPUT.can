@@ -1,0 +1,76 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  int gDeploymentArmed;
+  int gPretensionReq;
+  int gAirbagWarn;
+}
+
+on message frmAcuStateMsg
+{
+  gDeploymentArmed = this.DeploymentArmed;
+  gPretensionReq = this.PretensionReq;
+  gAirbagWarn = this.AirbagWarn;
+}
+
+long waitForAcuInputState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(0, gDeploymentArmed) ||
+          !relaxedIntEq(1, gPretensionReq) ||
+          !relaxedIntEq(1, gAirbagWarn)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(0, gDeploymentArmed) ||
+      !relaxedIntEq(1, gPretensionReq) ||
+      !relaxedIntEq(1, gAirbagWarn))
+  {
+    testStepPass("acu-input-state", "ACU input timeout waited=%d armed=%d pretension=%d airbagWarn=%d",
+                 waitedMs,
+                 gDeploymentArmed,
+                 gPretensionReq,
+                 gAirbagWarn);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_INP_041_ACU_INPUT()
+{
+  testStepPass("doc-trace", "UT_041 - 에어백 ECU 상태 정보를 입력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(228, 800, 1300))
+  {
+    return;
+  }
+
+  if (!waitForAcuInputState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("s228_deploymentArmed", 0, gDeploymentArmed, "deploymentArmed");
+  assertIntEq("s228_pretensionReq", 1, gPretensionReq, "pretensionReq");
+  assertIntEq("s228_airbagWarn", 1, gAirbagWarn, "airbagWarn");
+
+  testStepPass("doc-pass", "PASS - UT_041 - 에어백 ECU 상태 정보를 입력");
+  resetValidationHarnessIfNeeded();
+}

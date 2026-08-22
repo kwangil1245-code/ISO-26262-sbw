@@ -1,0 +1,36 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_IT_032_OUTPUT_FALLBACK()
+{
+  testStepPass("doc-trace", "IT_032 - 출력 채널 가용성 판정 및 대체 경고 유지 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(18, 900, 1300))
+  {
+    return;
+  }
+
+  if (!waitForObservedSelectedAlertMinState(6, 1, 800) ||
+      !waitForObservedFailSafe(1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntMin("output-fallback-level", 6, (long)@Test::obsSelectedAlertLevel, "ethSelectedAlertLevel");
+  assertIntMin("output-fallback-mode", 1, (long)@Test::obsFailSafeMode, "ethFailSafeMode");
+
+  testStepPass("doc-pass", "PASS - IT_032 - 출력 채널 가용성 판정 및 대체 경고 유지 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

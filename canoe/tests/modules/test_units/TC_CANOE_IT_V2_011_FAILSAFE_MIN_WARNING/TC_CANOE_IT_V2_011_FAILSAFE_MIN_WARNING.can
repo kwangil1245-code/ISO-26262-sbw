@@ -1,0 +1,45 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+export testcase TC_CANOE_IT_V2_011_FAILSAFE_MIN_WARNING()
+{
+  testStepPass("doc-trace", "IT_011 - 경고 전달 이상 시 fail-safe 진입 및 최소 경고 유지 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+  if (!launchScenarioAndWait(18, 1500, 1000))
+  {
+    return;
+  }
+
+  if (!waitForBaseResult(18, 2000))
+  {
+    return;
+  }
+
+  if (!waitForObservedDecelState(1, 0, 3, 800) ||
+      !waitForObservedFailSafe(1200) ||
+      !waitForObservedSelectedAlertMinState(6, 1, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("base-scenario-id", 18, (long)@Test::baseScenarioId, "baseScenarioId");
+  assertIntEq("base-result", 1, (long)@Test::baseScenarioResult, "baseScenarioResult");
+  assertIntEq("decel-decision-held", 1, (long)@Test::obsDecelDecisionReq, "ethDecelDecisionReq");
+  assertIntEq("decel-gate-reason", 3, (long)@Test::obsDecelGateReason, "ethDecelGateReason");
+  assertIntMin("fail-safe-mode", 1, (long)@Test::obsFailSafeMode, "ethFailSafeMode");
+  assertIntEq("decel-assist", 0, (long)@Test::obsDecelAssistReq, "ethDecelAssistReq");
+  assertIntMin("alert-level", 6, (long)@Test::obsSelectedAlertLevel, "ethSelectedAlertLevel");
+  assertIntEq("alert-type", 1, (long)@Test::obsSelectedAlertType, "ethSelectedAlertType");
+  assertIntMin("cluster-code", 100, (long)@Cluster::warningTextCode, "warningTextCode");
+
+  testStepPass("doc-pass", "PASS - IT_011 - 경고 전달 이상 시 fail-safe 진입 및 최소 경고 유지 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

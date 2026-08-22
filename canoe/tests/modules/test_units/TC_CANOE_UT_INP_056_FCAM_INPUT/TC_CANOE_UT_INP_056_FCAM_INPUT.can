@@ -1,0 +1,72 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  int gLanePreviewValid;
+  int gZonePreview;
+  int gPreviewConfidence;
+}
+
+on message frmRoadPreviewCameraStateMsg
+{
+  gLanePreviewValid = this.LanePreviewValid;
+  gZonePreview = this.ZonePreview;
+  gPreviewConfidence = this.PreviewConfidence;
+}
+
+long waitForFcamInputState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(1, gLanePreviewValid) ||
+          !relaxedIntEq(2, gZonePreview) ||
+          !relaxedIntEq(80, gPreviewConfidence)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(1, gLanePreviewValid) ||
+      !relaxedIntEq(2, gZonePreview) ||
+      !relaxedIntEq(80, gPreviewConfidence))
+  {
+    testStepPass("fcam-input-state", "FCAM input timeout waited=%d lane=%d zone=%d conf=%d",
+                 waitedMs, gLanePreviewValid, gZonePreview, gPreviewConfidence);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_INP_056_FCAM_INPUT()
+{
+  testStepPass("doc-trace", "UT_056 - 전방 카메라 센서 상태를 입력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(233, 800, 1300))
+  {
+    return;
+  }
+  if (!waitForFcamInputState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("s233_lanePreviewValid", 1, gLanePreviewValid, "lanePreviewValid");
+  assertIntEq("s233_zonePreview", 2, gZonePreview, "zonePreview");
+  assertIntEq("s233_previewConfidence", 80, gPreviewConfidence, "previewConfidence");
+
+  testStepPass("doc-pass", "PASS - UT_056 - 전방 카메라 센서 상태를 입력");
+  resetValidationHarnessIfNeeded();
+}

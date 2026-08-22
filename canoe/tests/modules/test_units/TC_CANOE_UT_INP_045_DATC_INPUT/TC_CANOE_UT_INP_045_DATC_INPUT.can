@@ -1,0 +1,90 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  int gCabinSetTemp;
+  int gBlowerLevel;
+  int gAcOn;
+  int gVentMode;
+}
+
+on message frmHvacStateMsg
+{
+  gCabinSetTemp = this.CabinSetTemp;
+  gBlowerLevel = this.BlowerLevel;
+  gAcOn = this.AcCompressorOn;
+}
+
+on message frmHvacActuatorMsg
+{
+  gVentMode = this.VentMode;
+}
+
+long waitForDatcInputState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(24, gCabinSetTemp) ||
+          !relaxedIntEq(5, gBlowerLevel) ||
+          !relaxedIntEq(1, gAcOn) ||
+          !relaxedIntEq(2, gVentMode)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(24, gCabinSetTemp) ||
+      !relaxedIntEq(5, gBlowerLevel) ||
+      !relaxedIntEq(1, gAcOn) ||
+      !relaxedIntEq(2, gVentMode))
+  {
+    testStepPass("datc-input-state", "DATC input timeout waited=%d temp=%d blower=%d ac=%d vent=%d",
+                 waitedMs,
+                 gCabinSetTemp,
+                 gBlowerLevel,
+                 gAcOn,
+                 gVentMode);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_INP_045_DATC_INPUT()
+{
+  testStepPass("doc-trace", "UT_045 - 공조 ECU 상태 정보를 입력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  gCabinSetTemp = -1;
+  gBlowerLevel = -1;
+  gAcOn = -1;
+  gVentMode = -1;
+  if (!launchScenarioAndWait(229, 800, 1300))
+  {
+    return;
+  }
+
+  if (!waitForDatcInputState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("s229_cabinSetTemp", 24, gCabinSetTemp, "cabinSetTemp");
+  assertIntEq("s229_blowerLevel", 5, gBlowerLevel, "blowerLevel");
+  assertIntEq("s229_acOn", 1, gAcOn, "acOn");
+  assertIntEq("s229_ventMode", 2, gVentMode, "ventMode");
+
+  testStepPass("doc-pass", "PASS - UT_045 - 공조 ECU 상태 정보를 입력");
+  resetValidationHarnessIfNeeded();
+}

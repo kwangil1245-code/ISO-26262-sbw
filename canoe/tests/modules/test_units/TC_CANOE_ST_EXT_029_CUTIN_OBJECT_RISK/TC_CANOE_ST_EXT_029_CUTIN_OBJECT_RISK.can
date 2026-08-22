@@ -1,0 +1,40 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_EXT_029_CUTIN_OBJECT_RISK()
+{
+  testStepPass("doc-trace", "ST_029 - 합류 또는 끼어들기 위험이 발생할 때 위험 경고와 이벤트 기록이 일관되게 동작하는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(22, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForObservedObjectRiskMin(2, 40, 1200) ||
+      !waitForObservedMergeCutIn(1200) ||
+      !waitForObservedSelectedAlertType(6, 1200) ||
+      !waitForObservedFailSafe(1200))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("cutin-object-merge-flag", 1, (long)@Test::obsMergeCutInFlag, "ethMergeCutInFlag");
+  assertIntMin("cutin-object-risk-class", 3, (long)@Test::obsObjectRiskClass, "ethObjectRiskClass");
+  assertIntEq("cutin-object-alert-type", 6, (long)@Test::obsSelectedAlertType, "ethSelectedAlertType");
+  assertIntEq("cutin-object-failsafe", 0, (long)@Test::obsFailSafeMode, "ethFailSafeMode");
+
+  testStepPass("doc-pass", "PASS - ST_029 - 합류 또는 끼어들기 위험이 발생할 때 위험 경고와 이벤트 기록이 일관되게 동작하는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}

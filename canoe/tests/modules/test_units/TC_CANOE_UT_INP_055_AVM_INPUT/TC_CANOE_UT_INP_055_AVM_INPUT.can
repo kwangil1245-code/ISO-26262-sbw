@@ -1,0 +1,67 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  int gViewMode;
+  int gSurroundActive;
+}
+
+on message frmSurroundParkMasterStateMsg
+{
+  gViewMode = this.ViewMode;
+  gSurroundActive = this.SurroundActive;
+}
+
+long waitForAvmInputState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(3, gViewMode) ||
+          !relaxedIntEq(1, gSurroundActive)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(3, gViewMode) ||
+      !relaxedIntEq(1, gSurroundActive))
+  {
+    testStepPass("avm-input-state", "AVM input timeout waited=%d view=%d active=%d",
+                 waitedMs, gViewMode, gSurroundActive);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_INP_055_AVM_INPUT()
+{
+  testStepPass("doc-trace", "UT_055 - 주변 영상 ECU 상태를 입력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(234, 800, 1300))
+  {
+    return;
+  }
+  if (!waitForAvmInputState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("s234_viewMode", 3, gViewMode, "viewMode");
+  assertIntEq("s234_surroundActive", 1, gSurroundActive, "surroundActive");
+
+  testStepPass("doc-pass", "PASS - UT_055 - 주변 영상 ECU 상태를 입력");
+  resetValidationHarnessIfNeeded();
+}

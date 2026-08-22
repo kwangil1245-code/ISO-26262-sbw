@@ -1,0 +1,39 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_IT_CORE_008_CLUSTER_DIRECTION_OUTPUT()
+{
+  testStepPass("doc-trace", "IT_008 - 기본 경고 및 긴급 경고 결과의 클러스터 안내 출력 통합 검증");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(30, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForCoreSelectedAlertState(6, 1, 800) ||
+      !waitForStableWarningRender(deriveExpectedEmergencyWarningCode(1, 2, 12, 20), 2, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("selected-alert-level", 6, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("selected-alert-type", 1, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("warning-text-code", deriveExpectedEmergencyWarningCode(1, 2, 12, 20), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntEq("render-direction", 2, (long)@UiRender::renderDirection, "renderDirection");
+
+  testStepPass("doc-pass", "PASS - IT_008 - 기본 경고 및 긴급 경고 결과의 클러스터 안내 출력 통합 검증");
+  resetValidationHarnessIfNeeded();
+}

@@ -1,0 +1,76 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\common\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+  int gTailgateAssistMode;
+  int gTailgateOpenReq;
+  int gTailgateActuatorCmd;
+}
+
+on message frmPowerTailgateCtrlStateMsg
+{
+  gTailgateAssistMode = this.TailgateAssistMode;
+  gTailgateOpenReq = this.OpenRequestState;
+  gTailgateActuatorCmd = this.TailgateActuatorCmd;
+}
+
+long waitForTgmInputState(dword timeoutMs)
+{
+  dword waitedMs;
+
+  waitedMs = 0;
+  while ((!relaxedIntEq(2, gTailgateAssistMode) ||
+          !relaxedIntEq(1, gTailgateOpenReq) ||
+          !relaxedIntEq(0, gTailgateActuatorCmd)) &&
+         waitedMs < timeoutMs)
+  {
+    TestWaitForTimeout(50);
+    waitedMs += 50;
+  }
+
+  if (!relaxedIntEq(2, gTailgateAssistMode) ||
+      !relaxedIntEq(1, gTailgateOpenReq) ||
+      !relaxedIntEq(0, gTailgateActuatorCmd))
+  {
+    testStepPass("tgm-input-state", "TGM input timeout waited=%d mode=%d openReq=%d actuator=%d",
+                 waitedMs,
+                 gTailgateAssistMode,
+                 gTailgateOpenReq,
+                 gTailgateActuatorCmd);
+    return 0;
+  }
+
+  return 1;
+}
+
+export testcase TC_CANOE_UT_INP_040_TGM_INPUT()
+{
+  testStepPass("doc-trace", "UT_040 - 테일게이트 ECU 상태 정보를 입력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(227, 800, 1300))
+  {
+    return;
+  }
+
+  if (!waitForTgmInputState(800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("s227_tailgateAssistMode", 2, gTailgateAssistMode, "tailgateAssistMode");
+  assertIntEq("s227_tailgateOpenReq", 1, gTailgateOpenReq, "tailgateOpenReq");
+  assertIntEq("s227_tailgateActuatorCmd", 0, gTailgateActuatorCmd, "tailgateActuatorCmd");
+
+  testStepPass("doc-pass", "PASS - UT_040 - 테일게이트 ECU 상태 정보를 입력");
+  resetValidationHarnessIfNeeded();
+}

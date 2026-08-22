@@ -1,0 +1,187 @@
+﻿# .gitignore
+
+# CANoe specific files
+*.cfg~
+*.can~
+*.log
+*.blf
+*.asc
+*.txt~
+*.cfg.bak
+Logging/
+*.logging
+
+# CANoe generated files
+*.canalyzer
+*.canoe
+*.candb++
+*.dbc~
+*.cbf
+*.stcfg
+*.cfg.ini
+!canoe/cfg/CAN_v2_topology.stcfg
+!canoe/cfg/CAN_v2_topology.cfg.ini
+*.vtcfg.local
+canoe/tmp/*.cfg.bak*
+canoe/tmp/*.png
+canoe/tmp/*.sysvars
+
+# Temporary files
+*.tmp
+*.bak
+*~
+*.swp
+*.swo
+~$*.xlsx
+**/~$*.xlsx
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# Build artifacts
+build/
+dist/
+*.o
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Documentation build
+docs/_build/
+*.pdf~
+*.docx~
+
+# Test results
+test-results/
+*.result
+*.xml
+coverage/
+*.vtestreport
+*.vtestreport-lock
+*.vtestreport-shm
+*.vtestreport-wal
+
+# Vector CANoe
+*.cfg.bak
+Logging/
+*.logging
+*.blf
+*.asc
+
+# CANoe outputs (canoe/ 구조로 이전)
+canoe/logging/
+canoe/legacy/
+canoe/nodes/
+canoe/reference/
+canoe/scripts/
+canoe/tmp/
+canoe/legacy/**
+canoe/reference/**
+canoe/tmp/**
+canoe/logging/*.blf
+canoe/logging/*.asc
+canoe/logging/*.mf4
+canoe/logging/test-results/
+canoe/tmp/dbc_compare/
+canoe/tmp/image.png
+
+# Portfolio report scratch previews / contact sheets
+docs/portfolio/project_report/preview_*.png
+docs/portfolio/project_report/generated/contact_sheet_*.png
+docs/portfolio/project_report/generated/extracted_candidates_sheet*.png
+docs/portfolio/project_report/generated/failsafe_crop_*.png
+docs/portfolio/project_report/generated/hyunjun_candidates.png
+
+# Local extracted media scratch artifacts
+driving-alert-workproducts/governance/short-paper/ppt/extracted_images/ppt/media/image.png
+driving-alert-workproducts/governance/short-paper/ppt/extracted_images/ppt/media/media1.mp4
+driving-alert-workproducts/governance/short-paper/ppt/extracted_images/ppt/media/media4.mp4
+canoe/tmp/assets/screenshots/
+canoe/tmp/backups/
+canoe/tests/tmp/
+canoe/logging/evidence/
+canoe/cfg/.run/
+canoe/tmp/reports/verification/*
+!canoe/tmp/reports/verification/README.md
+artifacts/verification_runs/
+product/sdv_operator/site/
+reference/samples/vector_samples_19_4_10/
+reference/vector_samples_19_4_10/
+
+# OTA packages (binary files)
+*.bin
+*.hex
+*.elf
+src/Diagnostics/OTA/update-packages/*.bin
+
+# Safety and requirements (keep templates, ignore filled)
+**/FMEA_filled.xlsx
+**/HARA_filled.xlsx
+**/requirements_filled.xlsx
+
+# Sensitive data
+*.key
+*.pem
+*.p12
+certificates/
+secrets/
+
+# Large data files
+# NOTE:
+# - 전역 무시는 협업 전달 누락을 유발할 수 있어 해제한다.
+# - 대용량 산출물은 경로 기반(예: logging/, tmp_rm/)으로 관리한다.
+
+# Python (if using Python tools)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+venv/
+.venv/
+ENV/
+
+# Node.js (if using Node tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Compiled documentation
+*.aux
+*.out
+*.toc
+
+# Backup files
+*.backup
+*.old
+
+# Configuration management
+**/baseline-records/*.lock
+**/change-requests/*.pending
+
+# Project local stash (do not commit)
+tmp_rm/
+.codex-tmp/
+/8
+/tmp_st_assigned.txt
+/tmp_st_dirs.txt
+/user-data-worker*
+/null/
+
+# Local RAG reference vault (large/local-only)
+driving-alert-workproducts/reference/
+submission-canoe-runtime/
+submission-canoe-runtime.zip
+
+nul

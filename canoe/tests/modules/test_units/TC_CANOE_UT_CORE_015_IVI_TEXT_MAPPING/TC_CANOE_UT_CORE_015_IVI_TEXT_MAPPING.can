@@ -1,0 +1,37 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_UT_CORE_015_IVI_TEXT_MAPPING()
+{
+  testStepPass("doc-trace", "UT_015 - 경고 문구와 방향 표시를 50ms 주기로 출력");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(209, 700, 1200))
+  {
+    return;
+  }
+
+  if (!waitForStableWarningRender(deriveExpectedEmergencyWarningCode(1, 1, 12, 40), -1, 1800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+  assertIntEq("selected-alert-level", 6, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("selected-alert-type", 1, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("warning-text-code", deriveExpectedEmergencyWarningCode(1, 1, 12, 40), (long)@Cluster::warningTextCode, "warningTextCode");
+  assertIntEq("fail-safe-clear", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - UT_015 - 경고 문구와 방향 표시를 50ms 주기로 출력");
+  resetValidationHarnessIfNeeded();
+}

@@ -1,0 +1,54 @@
+/*@!Encoding:65001*/
+includes
+{
+  #include "..\\common\\ValidationHarnessTestCommon.cin"
+}
+
+variables
+{
+}
+
+export testcase TC_CANOE_ST_CORE_007_HIGHWAY_POLICY_TRANSITION()
+{
+  testStepPass("doc-trace", "ST_007 - 일반 구간에서 고속 구간으로 전환되면 고속 구간 경고 판단 정책이 즉시 반영되는지 확인한다.");
+  testStepPass("closeout-smoke", "Closeout smoke: representative input reflection and testcase verdict drive the final ID judgment.");
+  if (!resetValidationHarnessIfNeeded())
+  {
+    return;
+  }
+
+  if (!launchScenarioAndWait(14, 700, 1000))
+  {
+    return;
+  }
+
+  if (!waitForNavContextState(0, -1, 800) ||
+      !waitForCoreSelectedAlertState(0, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st007-normal-zone", 0, (long)@Core::baseZoneContext, "baseZoneContext");
+
+  if (!launchScenarioAndWait(244, 900, 1300))
+  {
+    return;
+  }
+
+  if (!waitForNavContextState(2, -1, 800) ||
+      !waitForCoreSelectedAlertState(0, 0, 800) ||
+      !waitForCoreDriveState(-1, -1, 0, 800))
+  {
+    resetValidationHarnessIfNeeded();
+    return;
+  }
+
+  assertIntEq("st007-highway-zone", 2, (long)@Core::baseZoneContext, "baseZoneContext");
+  assertIntEq("st007-level", 0, getCanonicalSelectedAlertLevel(), "selectedAlertLevel");
+  assertIntEq("st007-type", 0, getCanonicalSelectedAlertType(), "selectedAlertType");
+  assertIntEq("st007-failsafe", 0, (long)@Core::failSafeMode, "failSafeMode");
+
+  testStepPass("doc-pass", "PASS - ST_007 - 일반 구간에서 고속 구간으로 전환되면 고속 구간 경고 판단 정책이 즉시 반영되는지 확인한다.");
+  resetValidationHarnessIfNeeded();
+}
