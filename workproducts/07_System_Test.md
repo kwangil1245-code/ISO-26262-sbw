@@ -1,8 +1,8 @@
-# 소프트웨어 요구사항 검증 명세서·결과서
+# 시스템 검증 명세서·결과서
 
-**Document ID**: STEER-07-SWQT  
-**ISO 26262 Reference**: Part 6, Cl.11  
-**ASPICE Reference**: SWE.6 (Software Qualification Test)  
+**Document ID**: STEER-07-SYSV  
+**ISO 26262 Reference**: Part 4, Cl.8  
+**ASPICE Reference**: SYS.4 (System Integration and Integration Test)  
 **Version**: 1.0  
 **Date**: 2026-08-24  
 **Status**: Completed  
@@ -12,154 +12,168 @@
 
 ## 1. 문서 목적
 
-본 문서는 통합된 ECU 소프트웨어가 `03_SW_Requirements.md`의 `SWR-*`를 충족하는지 블랙박스 관점에서 검증한 결과를 기록한다.
+본 문서는 조향 입력 장치, 입력 ECU, CAN Network, 출력 ECU 및 조향 출력 장치를 통합한 시스템이 `01_Requirements.md`의 `Req_001`부터 `Req_011`을 충족하는지 검증한 결과를 기록한다.
 
-CANoe/CAPL은 ECU 소프트웨어 외부의 조향 CAN 메시지와 Fault 조건을 생성하고 상태·출력 신호를 관측하는 시험 도구로 사용한다. 시험 대상은 통합된 소프트웨어이며, 실제 모터 토크·PWM 파형·배선·CAN Transceiver와 같은 물리 시스템 특성은 후속 시스템검증 범위로 분리한다.
+CANoe/CAPL을 이용하여 정상 조향 메시지와 통신·입력 Fault를 생성하고, CAN Trace와 실제 PWM·방향·정지 출력을 관측한다. CodeWarrior는 내부 상태를 최종 합격 기준으로 사용하지 않고, 결함 분석이 필요한 경우의 보조 관측 수단으로만 사용한다.
 
-## 2. SWE.5와 SWE.6의 구분
+## 2. 검증 범위와 단계 정리
 
-| 구분 | SWE.5 통합시험 | SWE.6 소프트웨어 요구사항 검증 |
-|---|---|---|
-| 검증 기준 | SWC, Interface, Runnable 구조 | `SWR-*` 요구사항 |
-| 관점 | 구성요소 사이의 연결 | 통합 SW의 외부 동작 |
-| 입력 | Stub/Mock 및 직접 Runnable 호출 | CANoe/CAPL, Test Hook 및 ECU Interface |
-| 내부 관측 | RTE Buffer와 Mock 호출 | CAN 신호, SW 상태, Fault 및 출력 명령 |
-| 주요 질문 | SWC가 올바르게 연결됐는가 | 통합 SW가 요구 동작을 수행하는가 |
-
-## 3. 시험 대상과 환경
-
-| 항목 | 구성 |
+| 단계 | 프로젝트 적용 |
 |---|---|
-| 시험 대상 | 입력 ECU 및 출력 ECU의 통합 Software Build |
-| 외부 자극 | CANoe/CAPL 기반 조향 메시지 및 Alive Counter 생성 |
-| 내부 Fault 주입 | CodeWarrior 또는 시험용 Hook을 통한 WdgM 상태 설정 |
-| 입력 ECU 확인 | 조향 입력 Test Hook 또는 제어 입력과 CAN Trace 비교 |
-| 관측 정보 | 조향값, Alive Counter, Fault Flag, NORMAL/FAIL-SAFE 상태, PWM 명령, 방향 명령 |
-| 물리 출력 제외 | 실제 PWM 파형, Pin 전압, LED, 모터 회전 및 토크 |
-| 판정 | 실제 SW 출력이 기대 결과와 일치하면 PASS |
+| SWE.4 | Stub/Mock 기반 소프트웨어 단위검증 |
+| SWE.5 | PC 환경에서 SWC Interface와 Runnable 통합검증 |
+| SWE.6 | 별도 공식 산출물로 주장하지 않음 |
+| SYS.4 | CANoe/CAPL, 실제 ECU, CAN 및 조향 출력을 포함한 시스템검증 |
+
+> `07_SW_Qualification_Verification.md`는 참고 초안으로만 취급하고 공식 수행 산출물에서는 제외한다. 본 프로젝트의 최종 검증 근거는 본 시스템검증 문서를 기준으로 관리한다.
+
+## 3. 시험 대상 시스템
 
 ```mermaid
 flowchart LR
-    C["CANoe·CAPL/Test Hook"] --> E["통합 ECU Software"]
-    E --> O["CAN·상태·출력 명령 관측"]
-    O --> V["SWR 기준 판정"]
+    P["가변저항·CAPL"] --> I["입력 ECU"]
+    I --> C["CAN Network"]
+    X["CANoe·CAPL Fault Injection"] --> C
+    C --> O["출력 ECU"]
+    O --> A["PWM·방향·LED·모터"]
 ```
 
-## 4. CAPL 시험 자극 원칙
-
-| 자극 유형 | CAPL 동작 | 검증 목적 |
+| System Element ID | 시험 대상 | 검증 내용 |
 |---|---|---|
-| 정상 메시지 | 유효 조향값과 증가하는 Alive Counter 송신 | 정상 수신·진단·제어 확인 |
-| Counter 고정 | 동일 Alive Counter를 반복 송신 | 갱신 이상과 Timeout Fault 확인 |
-| Invalid 값 | 정상 범위를 벗어난 조향값 송신 | 입력 유효성 Fault 확인 |
-| 정상 복귀 | Fault 해제 후 정상 메시지 연속 송신 | FAIL-SAFE 유지와 NORMAL 복귀 확인 |
-| Fault 재발 | 복귀 확인 중 비정상 메시지 재송신 | 복귀 중단 확인 |
+| SYS-E-001 | 조향 입력 장치 | 조향 입력 변화 제공 |
+| SYS-E-002 | 입력 ECU | 조향값 및 Alive Counter 생성·송신 |
+| SYS-E-003 | CAN Network | ECU 간 메시지 전달 및 CAPL Fault 주입 |
+| SYS-E-004 | 출력 ECU | Timeout·Invalid·실행 이상 진단 및 안전 상태 판단 |
+| SYS-E-005 | 조향 출력 장치 | PWM·좌우 방향·정지 동작 |
+| SYS-E-006 | 진단·모니터링 환경 | CAN Trace, 상태 LED 및 출력 결과 관측 |
 
-> 현재 구현의 통신 갱신 진단은 Data Received Event에서 Alive Counter를 비교한다. 따라서 본 시험에서는 메시지를 완전히 중단하는 방식이 아니라 동일 Counter를 반복 송신하여 갱신 이상 경로를 실행한다.
+## 4. 시험 환경
 
-## 5. SW Qualification Test Case
-
-### 5.1 입력 및 통신
-
-| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
-|---|---|---|---|---|
-| SVT-COM-001 | 입력 ECU에 최소·중간·최대 조향 입력을 순차 적용하고 CAN Trace 확인 | 대응하는 조향 정보가 생성되어 제공됨 | SWR-IN-001 | PASS |
-| SVT-COM-002 | 정상 조향값과 Alive Counter를 사용하여 조향 메시지 주기 송신 | 출력 ECU가 조향 정보와 갱신 정보를 정상 수신함 | SWR-COM-001, SWR-COM-002 | PASS |
-| SVT-COM-003 | CAPL에서 Alive Counter를 메시지마다 증가시켜 연속 송신 | 통신 Fault가 설정되지 않고 조향 정보가 제어에 사용됨 | SWR-COM-001, SWR-DIAG-001 | PASS |
-
-### 5.2 통신·입력·실행 진단
-
-| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
-|---|---|---|---|---|
-| SVT-DIAG-001 | CAPL에서 동일 Alive Counter를 진단 기준까지 반복 송신 | 갱신 이상이 감지되고 통신 Fault가 설정됨 | SWR-DIAG-001, SWR-DIAG-003 | PASS |
-| SVT-DIAG-002 | 정상 범위의 하한·상한 조향값 송신 | Invalid Fault가 설정되지 않음 | SWR-DIAG-002 | PASS |
-| SVT-DIAG-003 | 정상 범위 미만과 초과 조향값 송신 | Invalid Fault가 설정되고 안전 판단에 전달됨 | SWR-DIAG-002, SWR-DIAG-003 | PASS |
-| SVT-WDG-001 | 시험용 Hook으로 WdgM 상태를 OK로 설정 | 내부 실행 Fault가 설정되지 않음 | SWR-WDG-001, SWR-WDG-002 | PASS |
-| SVT-WDG-002 | 시험용 Hook으로 WdgM 상태를 FAILED, EXPIRED, STOPPED로 각각 설정 | 각 조건에서 내부 실행 Fault가 설정되고 안전 판단에 반영됨 | SWR-WDG-001, SWR-WDG-002 | PASS |
-
-### 5.3 안전 상태 전환·유지·복귀
-
-| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
-|---|---|---|---|---|
-| SVT-SAFE-001 | Timeout, Invalid 및 WdgM Fault를 각각 발생 | 각 Fault에서 NORMAL에서 FAIL-SAFE로 전환 | SWR-SAFE-001 | PASS |
-| SVT-SAFE-002 | FAIL-SAFE 상태에서 조향 입력을 변화 | 조향값이 안전값으로 제한되고 출력 명령이 비활성화됨 | SWR-SAFE-002 | PASS |
-| SVT-SAFE-003 | Fault 조건을 여러 처리 Cycle 동안 유지 | FAIL-SAFE와 안전 출력이 계속 유지됨 | SWR-SAFE-003 | PASS |
-| SVT-SAFE-004 | Fault 해제 후 정상 메시지를 복귀 기준만큼 연속 송신 | 기준 충족 전 FAIL-SAFE 유지, 기준 충족 후 NORMAL 복귀 | SWR-SAFE-004 | PASS |
-| SVT-SAFE-005 | 정상 복귀 확인 중 동일 Counter 또는 Invalid 값을 재주입 | 정상 복귀가 중단되고 FAIL-SAFE가 유지됨 | SWR-SAFE-005 | PASS |
-
-### 5.4 제어·출력·모니터링
-
-| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
-|---|---|---|---|---|
-| SVT-CTRL-001 | NORMAL 상태에서 조향값을 증가·감소 | 조향 변화에 따라 좌·우 방향과 출력 크기가 계산됨 | SWR-CTRL-001 | PASS |
-| SVT-CTRL-002 | 조향 변화량을 정지 조건 이내로 입력 | 정지 상태와 출력 비활성 명령 생성 | SWR-CTRL-002 | PASS |
-| SVT-ACT-001 | 정상 방향·PWM 계산 결과 생성 | 계산 결과가 Actuator Interface의 방향·PWM 명령으로 제공됨 | SWR-ACT-001 | PASS |
-| SVT-ACT-002 | FAIL-SAFE 또는 정지 상태 생성 | PWM과 방향 출력 명령이 비활성화됨 | SWR-ACT-002 | PASS |
-| SVT-MON-001 | NORMAL, Timeout, Invalid, WdgM Fault 및 복귀 조건을 순차 실행 | 시스템 상태·Fault 종류·출력 결과가 구분되어 관측됨 | SWR-MON-001, SWR-MON-002, SWR-MON-003 | PASS |
-
-## 6. SW 요구사항 추적성
-
-| SW 요구사항 | 검증 Test Case |
+| 항목 | 구성 |
 |---|---|
-| SWR-IN-001 | SVT-COM-001 |
-| SWR-COM-001 | SVT-COM-002, SVT-COM-003 |
-| SWR-COM-002 | SVT-COM-002 |
-| SWR-DIAG-001 | SVT-COM-003, SVT-DIAG-001 |
-| SWR-DIAG-002 | SVT-DIAG-002, SVT-DIAG-003 |
-| SWR-DIAG-003 | SVT-DIAG-001, SVT-DIAG-003 |
-| SWR-WDG-001 | SVT-WDG-001, SVT-WDG-002 |
-| SWR-WDG-002 | SVT-WDG-001, SVT-WDG-002 |
-| SWR-SAFE-001 | SVT-SAFE-001 |
-| SWR-SAFE-002 | SVT-SAFE-002 |
-| SWR-SAFE-003 | SVT-SAFE-003 |
-| SWR-SAFE-004 | SVT-SAFE-004 |
-| SWR-SAFE-005 | SVT-SAFE-005 |
-| SWR-CTRL-001 | SVT-CTRL-001 |
-| SWR-CTRL-002 | SVT-CTRL-002 |
-| SWR-ACT-001 | SVT-ACT-001 |
-| SWR-ACT-002 | SVT-ACT-002 |
-| SWR-MON-001 | SVT-MON-001 |
-| SWR-MON-002 | SVT-MON-001 |
-| SWR-MON-003 | SVT-MON-001 |
+| 입력 ECU | MPC-5606B 기반 ECU 보드 |
+| 출력 ECU | MPC-5606B 기반 ECU 보드 |
+| AUTOSAR 환경 | Mobilgene Classic 기반 생성 코드 및 SWC |
+| 빌드·다운로드 | CodeWarrior |
+| CAN 시험 | CANoe 및 CAPL |
+| 입력 장치 | 가변저항 또는 CAPL 생성 조향 메시지 |
+| 출력 장치 | PWM 출력, 좌·우 방향 Pin, 상태 LED 및 모터 |
+| PWM 확인 | PWM 계측값 또는 오실로스코프·로직 분석기 |
+| CAN 확인 | CANoe Trace, Signal 및 CAPL Test 결과 |
 
-## 7. 시험 결과 요약
+## 5. 시험 전제조건
+
+- 입력 ECU와 출력 ECU에 검증 대상 Software Build가 정상 다운로드되어야 한다.
+- 두 ECU와 CAN 장비의 Baud Rate 및 CAN DB 설정이 일치해야 한다.
+- 조향 메시지의 CAN ID, DLC, Signal 및 Alive Counter Mapping이 설정되어야 한다.
+- 출력 ECU의 PWM, 방향 Pin 및 상태 LED가 지정된 IoHwAb 채널에 연결되어야 한다.
+- 각 Test Case 시작 전에 Fault와 정상 복귀 Counter가 초기 상태여야 한다.
+- CAPL에서 정상 송신, Counter 고정, Invalid 값 및 정상 복귀 시나리오를 선택할 수 있어야 한다.
+
+## 6. 시스템 Test Case
+
+### 6.1 조향 입력 및 CAN 통신
+
+| SYS-TC ID | 시험 조건·절차 | 기대 결과 | 관측 방법 | 추적 ID | 결과 |
+|---|---|---|---|---|---|
+| SYS-TC-001 | 가변저항을 최소·중간·최대 위치로 변경 | 조향값이 입력 변화에 대응하여 생성됨 | CANoe Signal/Trace | Req_001 / SYS-F-001 / SYS-DES-001 | PASS |
+| SYS-TC-002 | 입력 ECU를 정상 동작시키고 조향 메시지 관측 | 조향 정보가 입력 ECU에서 출력 ECU로 주기적으로 전달됨 | CANoe Trace | Req_002 / SYS-F-002 / SYS-DES-002 | PASS |
+| SYS-TC-003 | 정상 메시지를 연속 관측 | Alive Counter가 메시지마다 증가하고 조향 Signal이 정상 범위로 전달됨 | CANoe Trace | Req_002 / SYS-F-002 / SYS-DES-002 | PASS |
+
+### 6.2 정상 조향 출력
+
+| SYS-TC ID | 시험 조건·절차 | 기대 결과 | 관측 방법 | 추적 ID | 결과 |
+|---|---|---|---|---|---|
+| SYS-TC-004 | 정상 상태에서 조향 입력을 증가 | 우측 방향 출력과 입력 변화에 대응하는 PWM 출력 발생 | 방향 Pin, PWM, 모터 | Req_009, Req_010 / SYS-F-009, SYS-F-010 / SYS-DES-009, SYS-DES-010 | PASS |
+| SYS-TC-005 | 정상 상태에서 조향 입력을 감소 | 좌측 방향 출력과 입력 변화에 대응하는 PWM 출력 발생 | 방향 Pin, PWM, 모터 | Req_009, Req_010 / SYS-F-009, SYS-F-010 / SYS-DES-009, SYS-DES-010 | PASS |
+| SYS-TC-006 | 조향 입력 변화량을 정지 조건 이내로 유지 | 좌·우 방향과 PWM 출력이 비활성화되고 모터 정지 | 방향 Pin, PWM, 모터 | Req_009, Req_010 / SYS-F-009, SYS-F-010 / SYS-DES-009, SYS-DES-010 | PASS |
+
+### 6.3 통신·입력 Fault 및 FAIL-SAFE
+
+| SYS-TC ID | 시험 조건·절차 | 기대 결과 | 관측 방법 | 추적 ID | 결과 |
+|---|---|---|---|---|---|
+| SYS-TC-007 | CAPL에서 Alive Counter를 동일 값으로 반복 송신 | 갱신 이상이 감지되고 FAIL-SAFE로 전환되어 PWM과 방향 출력 차단 | CANoe Trace, PWM, 방향 Pin, LED, 모터 | Req_003, Req_006, Req_007 / SYS-F-003, SYS-F-006, SYS-F-007 / SYS-DES-003, SYS-DES-006, SYS-DES-007 | PASS |
+| SYS-TC-008 | CAPL에서 정상 범위 미만의 조향값 송신 | Invalid가 감지되고 FAIL-SAFE로 전환되어 출력 차단 | CANoe Trace, PWM, 방향 Pin, LED, 모터 | Req_004, Req_006, Req_007 / SYS-F-004, SYS-F-006, SYS-F-007 / SYS-DES-004, SYS-DES-006, SYS-DES-007 | PASS |
+| SYS-TC-009 | CAPL에서 정상 범위 초과의 조향값 송신 | Invalid가 감지되고 FAIL-SAFE로 전환되어 출력 차단 | CANoe Trace, PWM, 방향 Pin, LED, 모터 | Req_004, Req_006, Req_007 / SYS-F-004, SYS-F-006, SYS-F-007 / SYS-DES-004, SYS-DES-006, SYS-DES-007 | PASS |
+| SYS-TC-010 | Fault 조건을 계속 유지하면서 조향값 변경 | FAIL-SAFE와 PWM·방향 출력 차단이 계속 유지됨 | PWM, 방향 Pin, LED, 모터 | Req_006, Req_007 / SYS-F-006, SYS-F-007 / SYS-DES-006, SYS-DES-007 | PASS |
+
+### 6.4 내부 실행 이상
+
+| SYS-TC ID | 시험 조건·절차 | 기대 결과 | 관측 방법 | 추적 ID | 결과 |
+|---|---|---|---|---|---|
+| SYS-TC-011 | 시험 설정에서 WdgM 감시 대상의 Checkpoint를 누락하거나 실행 이상 상태 생성 | 내부 실행 이상이 감지되고 FAIL-SAFE로 전환되어 출력 차단 | 상태 LED, PWM, 방향 Pin, 모터; 필요 시 CodeWarrior 보조 확인 | Req_005, Req_006, Req_007 / SYS-F-005, SYS-F-006, SYS-F-007 / SYS-DES-005, SYS-DES-006, SYS-DES-007 | PASS |
+
+### 6.5 정상 상태 복귀
+
+| SYS-TC ID | 시험 조건·절차 | 기대 결과 | 관측 방법 | 추적 ID | 결과 |
+|---|---|---|---|---|---|
+| SYS-TC-012 | Timeout 또는 Invalid Fault 해제 후 정상 메시지를 1회와 2회 송신 | 정상 복귀 기준 충족 전까지 FAIL-SAFE와 출력 차단 유지 | CANoe Trace, PWM, 방향 Pin, LED | Req_008 / SYS-F-008 / SYS-DES-008 | PASS |
+| SYS-TC-013 | Fault 해제 후 정상 메시지를 연속 3회 송신 | 3회째 정상 조건에서 NORMAL 복귀 후 조향 출력 재활성화 | CANoe Trace, PWM, 방향 Pin, LED, 모터 | Req_008 / SYS-F-008 / SYS-DES-008 | PASS |
+| SYS-TC-014 | 정상 메시지 2회 후 Timeout 또는 Invalid 재주입 | 정상 복귀가 중단되고 FAIL-SAFE와 출력 차단 유지 | CANoe Trace, PWM, 방향 Pin, LED | Req_008 / SYS-F-008 / SYS-DES-008 | PASS |
+
+### 6.6 상태 및 Fault 관측
+
+| SYS-TC ID | 시험 조건·절차 | 기대 결과 | 관측 방법 | 추적 ID | 결과 |
+|---|---|---|---|---|---|
+| SYS-TC-015 | NORMAL, Timeout, Invalid, WdgM Fault 및 정상 복귀 조건을 순서대로 실행 | 시스템 상태와 Fault 조건이 CANoe 정보, 상태 LED 또는 외부 출력 결과로 구분됨 | CANoe, LED, PWM, 방향 Pin | Req_011 / SYS-F-011 / SYS-DES-011 | PASS |
+
+## 7. 시스템 요구사항 추적성
+
+| 시스템 요구사항 | 검증 Test Case |
+|---|---|
+| Req_001 | SYS-TC-001 |
+| Req_002 | SYS-TC-002, SYS-TC-003 |
+| Req_003 | SYS-TC-007 |
+| Req_004 | SYS-TC-008, SYS-TC-009 |
+| Req_005 | SYS-TC-011 |
+| Req_006 | SYS-TC-007, SYS-TC-008, SYS-TC-009, SYS-TC-010, SYS-TC-011 |
+| Req_007 | SYS-TC-007, SYS-TC-008, SYS-TC-009, SYS-TC-010, SYS-TC-011 |
+| Req_008 | SYS-TC-012, SYS-TC-013, SYS-TC-014 |
+| Req_009 | SYS-TC-004, SYS-TC-005, SYS-TC-006 |
+| Req_010 | SYS-TC-004, SYS-TC-005, SYS-TC-006 |
+| Req_011 | SYS-TC-015 |
+
+## 8. HARA 및 Safety Goal 검증 연결
+
+| HARA ID | Safety Goal | 관련 시스템 Test Case |
+|---|---|---|
+| HC-01 | SG-01 | SYS-TC-007, SYS-TC-010 |
+| HC-02 | SG-02 | SYS-TC-008, SYS-TC-009, SYS-TC-010 |
+| HC-03 | SG-03 | SYS-TC-011 |
+| HC-04 | SG-04 | SYS-TC-007, SYS-TC-008, SYS-TC-009, SYS-TC-011 |
+| HC-05 | SG-05 | SYS-TC-012, SYS-TC-013, SYS-TC-014 |
+| HC-06 | SG-06 | SYS-TC-004, SYS-TC-005, SYS-TC-006 |
+
+## 9. 시험 결과 요약
 
 | 시험 그룹 | 전체 | PASS | FAIL | BLOCKED |
 |---|---:|---:|---:|---:|
-| 입력·통신 | 3 | 3 | 0 | 0 |
-| 통신·입력·실행 진단 | 5 | 5 | 0 | 0 |
-| 안전 상태 전환·유지·복귀 | 5 | 5 | 0 | 0 |
-| 제어·출력·모니터링 | 5 | 5 | 0 | 0 |
-| 합계 | 18 | 18 | 0 | 0 |
+| 조향 입력 및 CAN 통신 | 3 | 3 | 0 | 0 |
+| 정상 조향 출력 | 3 | 3 | 0 | 0 |
+| 통신·입력 Fault 및 FAIL-SAFE | 4 | 4 | 0 | 0 |
+| 내부 실행 이상 | 1 | 1 | 0 | 0 |
+| 정상 상태 복귀 | 3 | 3 | 0 | 0 |
+| 상태 및 Fault 관측 | 1 | 1 | 0 | 0 |
+| 합계 | 15 | 15 | 0 | 0 |
 
 ### 수행 결과
 
-- 정상 조향 메시지의 수신·진단·제어 경로가 정상 동작하였다.
-- 동일 Alive Counter와 범위 밖 조향값을 통해 Timeout 및 Invalid Fault를 확인하였다.
-- WdgM 상태 주입 시 내부 실행 Fault와 FAIL-SAFE 전환을 확인하였다.
-- FAIL-SAFE 상태에서 출력 명령이 제한되고 정상 조건 충족 시 NORMAL로 복귀하였다.
-- 20개 SW 요구사항이 하나 이상의 SWE.6 Test Case에 연결되었다.
+- 조향 입력이 CAN 메시지를 통해 출력 ECU에 전달되고 Alive Counter가 정상 갱신됨을 확인하였다.
+- 조향 입력 변화에 따라 PWM과 좌·우 방향 및 모터 동작이 변경됨을 확인하였다.
+- Alive Counter 고정 및 Invalid 값 주입 시 FAIL-SAFE 전환과 PWM·방향 출력 차단을 확인하였다.
+- Fault 지속 중 안전 출력이 유지되고 정상 조건 충족 시 출력이 재활성화됨을 확인하였다.
+- 시스템 요구사항 11개와 HARA의 Safety Goal 6개가 시스템 Test Case에 연결되었다.
 
-> CAPL Source, CANoe Configuration, CAN Trace, 상태값 캡처 및 시험용 Hook 설정은 각 `SVT-*` ID와 함께 시험 증적으로 관리한다.
+> CAPL Source, CANoe Configuration, CAN Trace, PWM 계측 결과, 출력 Pin·LED·모터 사진 또는 영상은 각 `SYS-TC-*` ID와 연결하여 시험 증적으로 관리한다.
 
-## 8. 시스템검증으로 이관되는 항목
+## 10. 합격 기준 및 회귀시험
 
-| 검증 항목 | SWE.6 제외 이유 |
-|---|---|
-| 입력 ECU와 출력 ECU의 실제 물리 CAN 연결 | Network HW와 Transceiver를 포함함 |
-| 실제 10 ms 송신 주기 정밀 측정 | ECU OS와 실제 Network Timing을 포함함 |
-| PWM Pin Duty와 주파수 측정 | MCAL·IoHwAb·Pin·계측기를 포함함 |
-| 방향 Pin 및 LED 전압 확인 | 실제 HW 출력 경로를 포함함 |
-| 모터 좌·우 회전과 정지 | Actuator와 전원·배선을 포함함 |
-
-## 9. 완료 기준
-
-- 모든 `SWR-*`가 하나 이상의 `SVT-*`에 연결되어야 한다.
-- 모든 Test Case가 PASS이거나 승인된 편차와 연결되어야 한다.
-- Software Build, CAPL 및 CANoe 설정 버전이 시험 결과와 연결되어야 한다.
-- SW 요구사항 변경 시 영향받는 Test Case를 재수행해야 한다.
-- 시스템검증 입력으로 통합 Software Build와 미검증 HW 항목을 전달해야 한다.
+- 모든 `Req_*`가 하나 이상의 `SYS-TC-*`에 연결되어야 한다.
+- 모든 시스템 Test Case가 PASS이거나 승인된 편차와 연결되어야 한다.
+- Software Build, CAN DB, CAPL 및 CANoe Configuration 버전이 시험 결과와 연결되어야 한다.
+- 요구사항·CAN Signal·진단 조건·상태 전이·HW Mapping 변경 시 영향받는 Test Case를 재수행해야 한다.
+- FAIL 발생 시 결함 ID, 수정 Commit 및 재시험 결과를 연결해야 한다.
 
 ---
 
-본 문서는 CANoe/CAPL을 사용한 SWE.6 소프트웨어 요구사항 검증의 기준 산출물이다. 실제 ECU 간 통신과 물리 출력은 후속 시스템검증에서 확인한다.
+본 문서는 CANoe/CAPL과 실제 ECU·조향 출력을 사용한 시스템검증의 기준 산출물이다.
