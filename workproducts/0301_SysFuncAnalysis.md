@@ -71,7 +71,7 @@ flowchart LR
 | 처리 | 수신 성공 여부 확인, 갱신 상태 진단, 조향값 유효성 진단 |
 | 출력 | 진단된 조향값, 통신·입력 Fault 결과 |
 | 실행 방식 | 조향 정보 Data Received Event 기반 실행 |
-| 할당 SW 요구사항 | SWR-COM-002, SWR-DIAG-001~003 |
+| 할당 SW 요구사항 | SWR-COM-002, SWR-DIAG-001, SWR-DIAG-002, SWR-DIAG-003 |
 
 ### 4.3 SWC_SafetyPolicy
 
@@ -81,7 +81,7 @@ flowchart LR
 | 처리 | 내부 실행 상태 확인, Fault 통합, 안전 상태 전환·유지·복귀 판단 |
 | 출력 | 안전 상태가 반영된 조향값, 출력 허가 상태, 시스템/Fault 상태 |
 | 실행 방식 | CanMonitor 결과 수신 Event 기반 실행 및 WdgM 연동 |
-| 할당 SW 요구사항 | SWR-WDG-001~002, SWR-SAFE-001~005, SWR-MON-001~002 |
+| 할당 SW 요구사항 | SWR-WDG-001, SWR-WDG-002, SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003, SWR-SAFE-004, SWR-SAFE-005, SWR-MON-001, SWR-MON-002 |
 
 ### 4.4 SWC_ControlCalc
 
@@ -91,7 +91,7 @@ flowchart LR
 | 처리 | 조향 방향 결정, 출력 크기 계산, 정지 상태 결정 |
 | 출력 | PWM 값, 좌·우 방향, 동작 허가 상태 |
 | 실행 방식 | SafetyPolicy 결과 수신 Event 기반 실행 |
-| 할당 SW 요구사항 | SWR-CTRL-001~002, SWR-SAFE-002~003, SWR-MON-003 |
+| 할당 SW 요구사항 | SWR-CTRL-001, SWR-CTRL-002, SWR-SAFE-002, SWR-SAFE-003, SWR-MON-003 |
 
 ### 4.5 SWC_Pwm_Actuator
 
@@ -101,7 +101,7 @@ flowchart LR
 | 처리 | 출력 허가 상태 확인 및 하드웨어 출력 요청 |
 | 출력 | PWM 채널, 방향 출력, 정지 상태 표시 |
 | 실행 방식 | ControlCalc 결과 수신 Event 기반 실행 |
-| 할당 SW 요구사항 | SWR-ACT-001~002, SWR-SAFE-002~003, SWR-MON-003 |
+| 할당 SW 요구사항 | SWR-ACT-001, SWR-ACT-002, SWR-SAFE-002, SWR-SAFE-003, SWR-MON-003 |
 
 ## 5. SWC 인터페이스 구조
 
@@ -119,13 +119,13 @@ flowchart TD
 | Interface ID | 제공자 | 사용자 | 전달 정보 | 인터페이스 유형 | 관련 SW 요구사항 |
 |---|---|---|---|---|---|
 | SW-IF-001 | IoHwAb Analog | SWC_SteeringSensor | 조향 입력값 | Client-Server | SWR-IN-001 |
-| SW-IF-002 | SWC_SteeringSensor | SWC_CanMonitor | 조향값, Alive Counter | Sender-Receiver / CAN Mapping | SWR-COM-001~002 |
-| SW-IF-003 | SWC_CanMonitor | SWC_SafetyPolicy | 진단 조향값, 통신·입력 Fault | Sender-Receiver | SWR-DIAG-001~003 |
-| SW-IF-004 | WdgM | SWC_SafetyPolicy | 내부 실행 상태 | Client-Server | SWR-WDG-001~002 |
-| SW-IF-005 | SWC_SafetyPolicy | SWC_ControlCalc | 안전 조향값, 출력 허가, 시스템 상태 | Sender-Receiver | SWR-SAFE-001~005, SWR-CTRL-001 |
-| SW-IF-006 | SWC_ControlCalc | SWC_Pwm_Actuator | PWM 값, 좌·우 방향, 동작 허가 | Sender-Receiver | SWR-CTRL-001~002, SWR-ACT-001~002 |
-| SW-IF-007 | SWC_Pwm_Actuator | IoHwAb Output | PWM·Digital 출력 요청 | Client-Server | SWR-ACT-001~002 |
-| SW-IF-008 | 출력 ECU SW | 진단·모니터링 환경 | 시스템 상태, Fault, 출력 결과 | Monitoring/CAN | SWR-MON-001~003 |
+| SW-IF-002 | SWC_SteeringSensor | SWC_CanMonitor | 조향값, Alive Counter | Sender-Receiver / CAN Mapping | SWR-COM-001, SWR-COM-002 |
+| SW-IF-003 | SWC_CanMonitor | SWC_SafetyPolicy | 진단 조향값, 통신·입력 Fault | Sender-Receiver | SWR-DIAG-001, SWR-DIAG-002, SWR-DIAG-003 |
+| SW-IF-004 | WdgM | SWC_SafetyPolicy | 내부 실행 상태 | Client-Server | SWR-WDG-001, SWR-WDG-002 |
+| SW-IF-005 | SWC_SafetyPolicy | SWC_ControlCalc | 안전 조향값, 출력 허가, 시스템 상태 | Sender-Receiver | SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003, SWR-SAFE-004, SWR-SAFE-005, SWR-CTRL-001 |
+| SW-IF-006 | SWC_ControlCalc | SWC_Pwm_Actuator | PWM 값, 좌·우 방향, 동작 허가 | Sender-Receiver | SWR-CTRL-001, SWR-CTRL-002, SWR-ACT-001, SWR-ACT-002 |
+| SW-IF-007 | SWC_Pwm_Actuator | IoHwAb Output | PWM·Digital 출력 요청 | Client-Server | SWR-ACT-001, SWR-ACT-002 |
+| SW-IF-008 | 출력 ECU SW | 진단·모니터링 환경 | 시스템 상태, Fault, 출력 결과 | Monitoring/CAN | SWR-MON-001, SWR-MON-002, SWR-MON-003 |
 
 ## 6. Runnable 및 Event 구조
 
@@ -182,26 +182,26 @@ sequenceDiagram
 | SWR-DIAG-003 | SWC-002 | SW-IF-003, RUN-002 |
 | SWR-WDG-001 | SWC-003 | SW-IF-004, RUN-003 |
 | SWR-WDG-002 | SWC-003 | SW-IF-004, RUN-003 |
-| SWR-SAFE-001 | SWC-003 | SW-IF-003~005, RUN-003 |
-| SWR-SAFE-002 | SWC-003~005 | SW-IF-005~007, RUN-003~005 |
-| SWR-SAFE-003 | SWC-003~005 | SW-IF-005~007, RUN-003~005 |
+| SWR-SAFE-001 | SWC-003 | SW-IF-003, SW-IF-004, SW-IF-005 / RUN-003 |
+| SWR-SAFE-002 | SWC-003, SWC-004, SWC-005 | SW-IF-005, SW-IF-006, SW-IF-007 / RUN-003, RUN-004, RUN-005 |
+| SWR-SAFE-003 | SWC-003, SWC-004, SWC-005 | SW-IF-005, SW-IF-006, SW-IF-007 / RUN-003, RUN-004, RUN-005 |
 | SWR-SAFE-004 | SWC-003 | SW-IF-005, RUN-003 |
 | SWR-SAFE-005 | SWC-003 | SW-IF-005, RUN-003 |
-| SWR-CTRL-001 | SWC-004 | SW-IF-005~006, RUN-004 |
-| SWR-CTRL-002 | SWC-004 | SW-IF-005~006, RUN-004 |
-| SWR-ACT-001 | SWC-005 | SW-IF-006~007, RUN-005 |
-| SWR-ACT-002 | SWC-005 | SW-IF-006~007, RUN-005 |
+| SWR-CTRL-001 | SWC-004 | SW-IF-005, SW-IF-006 / RUN-004 |
+| SWR-CTRL-002 | SWC-004 | SW-IF-005, SW-IF-006 / RUN-004 |
+| SWR-ACT-001 | SWC-005 | SW-IF-006, SW-IF-007 / RUN-005 |
+| SWR-ACT-002 | SWC-005 | SW-IF-006, SW-IF-007 / RUN-005 |
 | SWR-MON-001 | SWC-003 | SW-IF-008, RUN-003 |
 | SWR-MON-002 | SWC-003 | SW-IF-008, RUN-003 |
-| SWR-MON-003 | SWC-003~005 | SW-IF-005~008, RUN-003~005 |
+| SWR-MON-003 | SWC-003, SWC-004, SWC-005 | SW-IF-005, SW-IF-006, SW-IF-007, SW-IF-008 / RUN-003, RUN-004, RUN-005 |
 
 ## 10. 후속 설계 전개
 
 | 아키텍처 항목 | 후속 문서 | 구체화 내용 |
 |---|---|---|
 | SW-IF-002, SW-IF-008 | `0302_Network_Flow_Definition.md` | ECU 간 네트워크 흐름과 송수신 순서 |
-| SW-IF-002, RUN-001~002 | `0303_Communication_Specification.md` | CAN ID, DLC, Signal, 범위, 주기 및 Alive Counter |
-| SW-IF-003~006, RUN-002~004 | `0304_System_Variables.md` | Fault Flag, 상태값, Counter, 임계값 및 초기값 |
+| SW-IF-002, RUN-001, RUN-002 | `0303_Communication_Specification.md` | CAN ID, DLC, Signal, 범위, 주기 및 Alive Counter |
+| SW-IF-003, SW-IF-004, SW-IF-005, SW-IF-006 / RUN-002, RUN-003, RUN-004 | `0304_System_Variables.md` | Fault Flag, 상태값, Counter, 임계값 및 초기값 |
 | 전체 SWC·Interface·Runnable | `04_SW_Design_Implementation.md` | RTE API, Task Mapping, 알고리즘, IoHwAb 및 코드 |
 | 전체 `SWR-*` 및 SWC | Test Specification | 단위·통합 시험 항목과 합격 기준 |
 
