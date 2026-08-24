@@ -1,158 +1,160 @@
-# 시스템 설계 명세서 (System Design Specification)
+# 시스템 아키텍처 설계 명세서 (System Architecture Design Specification)
 
-**Document ID**: STEER-02-SDS  
+**Document ID**: STEER-02-SADS  
 **ISO 26262 Reference**: Part 4, Cl.7 (System Design)  
-**ASPICE Reference**: SYS.3 / SWE.2  
-**Version**: 1.0  
-**Date**: 2026-08-22  
+**ASPICE Reference**: SYS.3 (System Architectural Design)  
+**Version**: 2.0  
+**Date**: 2026-08-24  
 **Status**: Draft  
 **Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템  
-**Subtitle**: 시스템 구조, 기능 할당, 통신 및 데이터 통합 설계
+**Subtitle**: 조향 입력, ECU 간 통신, 안전 판단 및 조향 출력 시스템 구조
 
 ---
 
 ## 1. 문서 목적
 
-본 문서는 시스템 요구사항 `Req_001~Req_011`을 구현하기 위한 ECU 구조, 기능 할당, 데이터 흐름, 통신 명세, 인터페이스, 시스템 변수 및 안전 상태 설계를 통합 정의한다. 기존 `02_Concept_design.md`와 `0301~0304` 문서의 역할을 하나의 기준 문서로 통합한다.
+본 문서는 시스템 요구사항 `Req_001~Req_011`을 시스템 요소에 할당하고, 조향 입력 장치, 입력 ECU, 차량 네트워크, 출력 ECU, 조향 출력 장치 및 진단 인터페이스 사이의 구조와 상호작용을 정의한다.
 
-## 2. 시스템 아키텍처
+본 문서는 시스템 수준의 아키텍처를 다루며 SWC, Runnable, RTE API, 내부 변수, 진단 횟수 및 제어 알고리즘과 같은 소프트웨어 구현 상세는 정의하지 않는다. 해당 내용은 `03_SW_Requirements.md`와 `04_SW_Design_Implementation.md`에서 구체화한다.
+
+## 2. 시스템 목적과 범위
+
+| 항목 | 내용 |
+|---|---|
+| 시스템 목적 | 조향 입력과 내부 실행 상태를 감시하고, 이상 발생 시 안전 상태로 전환하여 의도하지 않은 조향 출력을 방지한다. |
+| 시스템 입력 | 운전자 조향 입력, 조향 정보의 갱신 상태, 출력 ECU 내부 실행 상태 |
+| 시스템 처리 | 조향 정보 전달, 통신·입력 이상 감지, 내부 실행 감시, 안전 상태 판단, 조향 출력 계산 및 제한 |
+| 시스템 출력 | 조향 방향과 출력 크기, 정상·안전 상태, 진단된 오류 상태 |
+| 시스템 경계 | 조향 입력 장치부터 입력 ECU, CAN Network, 출력 ECU 및 조향 출력 장치까지 포함한다. |
+| 범위 외 | 실제 차량 조향 동역학, 운전자 경고 HMI, 양산 수준의 이중화 및 Fail-Operational 제어 |
+
+## 3. 시스템 컨텍스트
 
 ```mermaid
 flowchart LR
-    A["조향 입력"] --> B["입력 ECU<br>SteeringSensor"]
-    B -->|"CAN 0x100"| C["출력 ECU<br>진단·안전·제어"]
-    C --> D["IoHwAb"]
-    D --> E["PWM·방향·LED"]
+    A["운전자"] --> B["조향 입력 장치"]
+    B --> C["조향 오류 복구·진단 시스템"]
+    C --> D["조향 출력 장치"]
+    C --> E["진단·모니터링 환경"]
 ```
 
-### 출력 ECU 기능 구조
+| 외부 요소 | 시스템과의 관계 | 주요 정보 |
+|---|---|---|
+| 운전자 | 조향 의도를 입력한다. | 조향 입력 |
+| 조향 입력 장치 | 운전자 입력을 전기적 값으로 제공한다. | 조향 입력값 |
+| 조향 출력 장치 | 시스템에서 결정한 제어 출력을 물리적 동작으로 변환한다. | 방향, 출력 크기, 정지 상태 |
+| 진단·모니터링 환경 | 시스템 상태와 오류 상태를 관측한다. | 정상·안전 상태, Fault 정보 |
+
+## 4. 시스템 아키텍처
+
+```mermaid
+flowchart LR
+    A["조향 입력 장치"] --> B["입력 ECU"]
+    B --> C["CAN Network"]
+    C --> D["출력 ECU"]
+    D --> E["조향 출력 장치"]
+```
+
+### 시스템 요소 정의
+
+| Element ID | 시스템 요소 | 주요 책임 | HW/SW 구분 |
+|---|---|---|---|
+| SYS-E-001 | 조향 입력 장치 | 운전자의 조향 입력을 전기적 신호로 제공한다. | HW |
+| SYS-E-002 | 입력 ECU | 조향 입력을 수집하고 출력 ECU로 전달할 조향 정보를 생성한다. | HW + SW |
+| SYS-E-003 | CAN Network | 입력 ECU와 출력 ECU 사이에서 조향 정보를 전달한다. | Network |
+| SYS-E-004 | 출력 ECU | 조향 정보와 내부 상태를 진단하고 안전 상태 및 조향 출력을 결정한다. | HW + SW |
+| SYS-E-005 | 조향 출력 장치 | 출력 ECU의 제어값을 PWM·방향·정지 동작으로 반영한다. | HW |
+| SYS-E-006 | 진단·모니터링 인터페이스 | 시스템의 동작 상태와 오류 정보를 외부에 제공한다. | Interface |
+
+## 5. 시스템 기능 구조
 
 ```mermaid
 flowchart TD
-    A["CAN 입력"] --> B["CanMonitor"]
-    B --> C["SafetyPolicy"]
-    W["WdgM"] --> C
-    C --> D["ControlCalc"]
-    D --> E["Pwm Actuator"]
+    A["조향 입력 수집·전달"] --> B["입력·통신 상태 진단"]
+    B --> C["안전 상태 판단"]
+    C --> D["조향 출력 결정"]
+    D --> E["하드웨어 출력"]
 ```
 
-## 3. 기능 할당
-
-| Design ID | ECU/계층 | 기능 블록 | 주요 책임 | 관련 요구사항 |
-|---|---|---|---|---|
-| DES-IN-001 | 입력 ECU/ASW | SteeringSensor | 조향 입력을 수집하고 갱신 정보를 포함한 CAN 메시지를 생성한다. | Req_001, Req_002 |
-| DES-COM-001 | 입력·출력 ECU/BSW | CAN Communication | 입력 ECU에서 출력 ECU로 조향 정보와 Alive Counter를 전달한다. | Req_002, Req_003 |
-| DES-DIAG-001 | 출력 ECU/ASW | CanMonitor | CAN 정보의 갱신 상태를 확인하여 Timeout Fault를 생성한다. | Req_003 |
-| DES-DIAG-002 | 출력 ECU/ASW | CanMonitor | 수신 조향각의 유효 범위를 검사하여 Invalid Fault를 생성한다. | Req_004 |
-| DES-WDGM-001 | 출력 ECU/BSW | WdgM | SafetyPolicy의 실행 상태를 감시하고 Global Status를 제공한다. | Req_005 |
-| DES-SAFE-001 | 출력 ECU/ASW | SafetyPolicy | 입력 Fault와 WdgM Fault를 종합하여 NORMAL/FAIL-SAFE 상태를 결정한다. | Req_006 |
-| DES-SAFE-002 | 출력 ECU/ASW | SafetyPolicy | FAIL-SAFE 상태에서 조향값과 출력 허용 상태를 안전값으로 설정한다. | Req_007 |
-| DES-SAFE-003 | 출력 ECU/ASW | SafetyPolicy | 정상 조건이 지속적으로 확인된 경우에만 NORMAL 상태로 복귀한다. | Req_008 |
-| DES-CTRL-001 | 출력 ECU/ASW | ControlCalc | 조향 변화량을 이용하여 방향과 PWM Duty를 계산한다. | Req_009 |
-| DES-ACT-001 | 출력 ECU/ASW·IoHwAb | Pwm_Actuator | 계산된 PWM, 방향 및 정지 상태를 하드웨어로 출력한다. | Req_010 |
-| DES-MON-001 | 출력 ECU/진단 경로 | Status Monitoring | 현재 상태와 Fault 상태를 외부에서 확인할 수 있도록 제공한다. | Req_011 |
-
-## 4. 데이터 및 네트워크 흐름
-
-| Flow ID | 송신 | 수신 | 전달 데이터 | 전달 방식 | 실행 조건 |
-|---|---|---|---|---|---|
-| FLOW-01 | Potentiometer | SteeringSensor | 조향 입력값 | IoHwAb Read | 입력 ECU 주기 실행 |
-| FLOW-02 | SteeringSensor | CanMonitor | 조향각, Alive Counter | CAN | 10 ms 송신, Data Received Event 수신 |
-| FLOW-03 | CanMonitor | SafetyPolicy | 조향각, Fault Flag | RTE Sender-Receiver | 데이터 수신·전달 이벤트 |
-| FLOW-04 | WdgM | SafetyPolicy | WdgM Global Status | RTE Client-Server | SafetyPolicy 실행 중 API 호출 |
-| FLOW-05 | SafetyPolicy | ControlCalc | 안전 조향값, 출력 Fault Flag | RTE Sender-Receiver | 데이터 전달 이벤트 |
-| FLOW-06 | ControlCalc | Pwm_Actuator | PWM 값, Left, Right, Keep_Go | RTE Sender-Receiver | 데이터 전달 이벤트 |
-| FLOW-07 | Pwm_Actuator | PWM·Digital Output | PWM, 방향, 정지 LED | IoHwAb Call | Actuator Runnable 실행 |
-
-> SteeringSensor만 명시적인 10 ms 주기 Runnable로 구성된다. 출력 ECU의 CanMonitor, SafetyPolicy, ControlCalc 및 Pwm_Actuator는 앞 단계의 데이터 수신·전달 이벤트에 따라 연쇄 실행된다.
-
-## 5. CAN 통신 명세
-
-| Message | Identifier | DLC | Signal | Byte 위치 | Data Type | Data 범위 | 송신 주기 | 송신→수신 |
-|---|---:|---:|---|---|---|---|---|---|
-| Project_SSU_SteerInfo | `0x100` | 3 Byte | SSU_SteerAngle | Byte 0~1 | `sint16` | -512~511 | 10 ms | SteeringSensor → CanMonitor |
-|  |  |  | SSU_AliveCounter | Byte 2 | `uint8` | 0~255 | 10 ms | SteeringSensor → CanMonitor |
-
-## 6. Port 및 Interface 정의
-
-| Interface ID | 송신/제공 | 수신/요구 | 주요 Data/API | Interface 유형 |
-|---|---|---|---|---|
-| IF-01 | IoHwAb Potentiometer | SteeringSensor | 조향 입력 ReadDirect | Client-Server |
-| IF-02 | SteeringSensor | CanMonitor | SSU_SteerAngle, SSU_AliveCounter | Sender-Receiver/CAN Mapping |
-| IF-03 | CanMonitor | SafetyPolicy | Steer_info, Flag | Sender-Receiver |
-| IF-04 | WdgM | SafetyPolicy | GetGlobalStatus, GetFirstExpiredSEID, CheckpointReached | Client-Server |
-| IF-05 | SafetyPolicy | ControlCalc | Steerinfo, flag | Sender-Receiver |
-| IF-06 | ControlCalc | Pwm_Actuator | Pwm_info, Left, Right, Keep_Go | Sender-Receiver |
-| IF-07 | Pwm_Actuator | IoHwAb | SetDutyCycle, MotorIn1/2, StopLed | Client-Server |
-
-## 7. 시스템 변수 정의
-
-| Variable ID | Name | Data Type | 범위/값 | 초기값 | 사용 기능 | 설명 |
-|---|---|---|---|---|---|---|
-| VAR-001 | aliveCounter | `uint8` | 0~255 | 0 | SteeringSensor | CAN 메시지 갱신 상태 식별값 |
-| VAR-002 | angle | `sint16` | -512~511 | 0 | SteeringSensor, CanMonitor | 조향 입력값 |
-| VAR-003 | prevAliveCounter | `uint8` | 0~255 | 0 | CanMonitor | 이전 Alive Counter 저장값 |
-| VAR-004 | firstValid | `boolean` | TRUE/FALSE | FALSE | CanMonitor | 최초 정상 수신 여부 |
-| VAR-005 | sameCounterCnt | `uint8` | 0 이상 | 0 | CanMonitor | 동일 Alive Counter 연속 수신 횟수 |
-| VAR-006 | inputFault | `boolean` | TRUE/FALSE | FALSE | CanMonitor, SafetyPolicy | Timeout/Invalid 통합 Fault 상태 |
-| VAR-007 | gIsFailsafe | `boolean` | TRUE/FALSE | FALSE | SafetyPolicy | FAIL-SAFE 활성 상태 |
-| VAR-008 | gNormalRecoverCnt | `uint8` | 0~3 | 0 | SafetyPolicy | 연속 정상 조건 확인 횟수 |
-| VAR-009 | wdgmStatus | `WdgM_GlobalStatusType` | OK/FAILED/EXPIRED/STOPPED | OK | SafetyPolicy | WdgM Global Status |
-| VAR-010 | prev_input_steer | `sint16` | -512~511 | 0 | ControlCalc | 이전 조향각 저장값 |
-| VAR-011 | steer_diff | `sint16` | -1023~1023 | 0 | ControlCalc | 현재값과 이전값의 조향 변화량 |
-| VAR-012 | AbsoluteDutyCycle | `sint16` | 0~32768 | 0 | ControlCalc, Pwm_Actuator | PWM Duty 출력값 |
-| VAR-013 | Left | `boolean` | TRUE/FALSE | FALSE | ControlCalc, Pwm_Actuator | 좌측 방향 출력 상태 |
-| VAR-014 | Right | `boolean` | TRUE/FALSE | FALSE | ControlCalc, Pwm_Actuator | 우측 방향 출력 상태 |
-| VAR-015 | Keep_Go | `boolean` | TRUE/FALSE | FALSE | ControlCalc, Pwm_Actuator | 구동 허용 상태 |
-
-## 8. 진단 및 상태 전이 설계
-
-### 진단 조건
-
-| Diagnostic ID | 입력 조건 | 판정 | 후속 동작 | 관련 Design ID |
-|---|---|---|---|---|
-| DIA-001 | 조향각 또는 Alive Counter RTE Read 실패 | 입력 Fault | SafetyPolicy에 Fault 전달 | DES-DIAG-001 |
-| DIA-002 | 최초 정상 수신 이후 동일 Alive Counter 2회 이상 연속 수신 | Timeout Fault | SafetyPolicy에 Fault 전달 | DES-DIAG-001 |
-| DIA-003 | 조향각이 -512~511 범위를 벗어남 | Invalid Fault | SafetyPolicy에 Fault 전달 | DES-DIAG-002 |
-| DIA-004 | WdgM Global Status가 FAILED, EXPIRED 또는 STOPPED | 내부 실행 Fault | FAIL-SAFE 판단에 반영 | DES-WDGM-001 |
-
-### 상태 전이
-
-| 현재 상태 | 조건 | 다음 상태 | 출력 동작 |
+| Function ID | 시스템 기능 | 설명 | 할당 요소 |
 |---|---|---|---|
-| NORMAL | 입력 및 WdgM Fault 없음 | NORMAL | 유효한 조향 입력에 따라 방향과 PWM을 계산한다. |
-| NORMAL | 입력 Fault 또는 WdgM Fault 발생 | FAIL-SAFE | 조향값과 PWM을 0으로 설정하고 방향·구동 출력을 차단한다. |
-| FAIL-SAFE | 정상 조건 1회 또는 2회 | FAIL-SAFE | 출력 차단을 유지하고 복귀 카운터를 증가시킨다. |
-| FAIL-SAFE | 정상 조건 3회 연속 | NORMAL | 복귀 카운터를 초기화하고 정상 출력을 다시 허용한다. |
-| FAIL-SAFE | 정상 확인 중 Fault 재발 | FAIL-SAFE | 복귀 카운터를 0으로 초기화하고 출력 차단을 유지한다. |
+| SYS-F-001 | 조향 입력 수집 | 운전자의 조향 입력을 수집한다. | SYS-E-001, SYS-E-002 |
+| SYS-F-002 | 조향 정보 전달 | 조향 정보를 입력 ECU에서 출력 ECU로 전달한다. | SYS-E-002, SYS-E-003, SYS-E-004 |
+| SYS-F-003 | 통신 상태 진단 | 조향 정보가 정상적으로 수신·갱신되는지 판단한다. | SYS-E-004 |
+| SYS-F-004 | 입력 유효성 진단 | 수신된 조향 입력이 정상적으로 사용할 수 있는 값인지 판단한다. | SYS-E-004 |
+| SYS-F-005 | 내부 실행 상태 감시 | 출력 ECU 내부의 조향 관련 기능이 정상적으로 실행되는지 감시한다. | SYS-E-004 |
+| SYS-F-006 | 안전 상태 판단 | 진단 결과를 종합하여 정상 상태 또는 안전 상태를 결정한다. | SYS-E-004 |
+| SYS-F-007 | 안전 출력 제한 | 안전 상태에서 의도하지 않은 조향 출력을 방지하도록 출력을 제한한다. | SYS-E-004, SYS-E-005 |
+| SYS-F-008 | 정상 상태 복귀 | 정의된 정상 조건이 지속되는 경우 정상 상태로 복귀한다. | SYS-E-004 |
+| SYS-F-009 | 조향 출력 계산 | 유효한 조향 입력을 기반으로 방향과 출력 크기를 결정한다. | SYS-E-004 |
+| SYS-F-010 | 조향 하드웨어 출력 | 결정된 조향 출력을 출력 장치에 전달한다. | SYS-E-004, SYS-E-005 |
+| SYS-F-011 | 진단 상태 제공 | 시스템 상태와 오류 정보를 외부에서 확인할 수 있도록 제공한다. | SYS-E-004, SYS-E-006 |
 
-## 9. 제어 및 하드웨어 출력 설계
+## 6. 시스템 인터페이스
 
-| Control ID | 조건/입력 | 설계 동작 | 출력 |
+| Interface ID | 송신 요소 | 수신 요소 | 전달 정보 | 인터페이스 형태 |
+|---|---|---|---|---|
+| SYS-IF-001 | 조향 입력 장치 | 입력 ECU | 운전자 조향 입력 | Analog Input |
+| SYS-IF-002 | 입력 ECU | 출력 ECU | 조향 정보 및 갱신 상태 | CAN Communication |
+| SYS-IF-003 | 출력 ECU | 조향 출력 장치 | 조향 방향, 출력 크기 및 정지 상태 | PWM/Digital Output |
+| SYS-IF-004 | 출력 ECU | 진단·모니터링 환경 | 시스템 상태 및 Fault 정보 | Diagnostic/Monitoring Interface |
+
+> CAN Identifier, DLC, Signal 배치, 송신 주기와 같은 상세 통신 조건은 시스템 인터페이스를 구현하기 위한 SW 요구사항 및 SW 설계 단계에서 정의한다.
+
+## 7. 정상 및 고장 동작 개념
+
+| 시스템 상태 | 진입 조건 | 시스템 동작 | 종료 조건 |
 |---|---|---|---|
-| CTRL-001 | Fault Flag 활성 | 정상 제어 계산을 중단한다. | PWM 0, Left/Right/Keep_Go FALSE |
-| CTRL-002 | 조향 변화량 > +2 | 우측 방향으로 판정한다. | Right TRUE |
-| CTRL-003 | 조향 변화량 < -2 | 좌측 방향으로 판정한다. | Left TRUE |
-| CTRL-004 | 조향 변화량 -2~+2 | 정지 상태로 판정한다. | PWM 0, Keep_Go FALSE |
-| CTRL-005 | 조향 변화량 절댓값 > 512 | PWM 계산 입력을 제한한다. | 절댓값 512 적용 |
-| CTRL-006 | Keep_Go FALSE | 하드웨어 출력을 정지 상태로 설정한다. | PWM 0, MotorIn1/2 FALSE, StopLed TRUE |
+| NORMAL | 조향 입력, 통신 및 내부 실행 상태가 정상 | 유효한 조향 입력에 따라 조향 출력을 결정하고 출력 장치에 전달한다. | 입력·통신·내부 실행 이상 검출 |
+| FAIL-SAFE | 입력·통신 또는 내부 실행 이상 검출 | 의도하지 않은 조향 동작을 방지하도록 조향 출력을 제한한다. | 정의된 정상 복귀 조건 충족 |
 
-## 10. 요구사항-설계 추적성
+### 시스템 고장 대응 원칙
 
-| Requirement ID | Design ID | 주요 설계 근거 |
+| Fault 유형 | 시스템 영향 | 시스템 대응 |
 |---|---|---|
-| Req_001 | DES-IN-001 | 조향 입력 수집 및 VAR-002 생성 |
-| Req_002 | DES-IN-001, DES-COM-001 | FLOW-01~FLOW-02, CAN 메시지 명세 |
-| Req_003 | DES-COM-001, DES-DIAG-001 | DIA-001~DIA-002 |
-| Req_004 | DES-DIAG-002 | DIA-003 |
-| Req_005 | DES-WDGM-001 | IF-04, DIA-004 |
-| Req_006 | DES-SAFE-001 | NORMAL→FAIL-SAFE 상태 전이 |
-| Req_007 | DES-SAFE-002, DES-ACT-001 | CTRL-001, CTRL-006 |
-| Req_008 | DES-SAFE-003 | 정상 조건 3회 연속 복귀 |
-| Req_009 | DES-CTRL-001 | CTRL-002~CTRL-005 |
-| Req_010 | DES-ACT-001 | FLOW-06~FLOW-07, IF-07 |
-| Req_011 | DES-MON-001 | 상태·Fault 모니터링 경로 |
+| 조향 정보 미수신·미갱신 | 오래된 조향 정보가 계속 사용될 수 있음 | 통신 이상을 감지하고 안전 상태로 전환한다. |
+| 비정상 조향 입력 | 운전자 의도와 다른 출력이 생성될 수 있음 | 입력을 제어에 사용하지 않고 안전 상태로 전환한다. |
+| 출력 ECU 내부 실행 이상 | 진단·판단·제어 결과를 신뢰할 수 없음 | 실행 이상을 감지하고 안전 상태로 전환한다. |
+| 안전 상태 전환 실패 | Fault 상태에서 조향 출력이 지속될 수 있음 | 안전 출력 제한을 정상 제어보다 우선 적용한다. |
+| 불안정한 정상 복귀 | Fault가 남아 있는 상태에서 출력이 재활성화될 수 있음 | 정상 조건의 지속성을 확인한 후 복귀한다. |
+
+## 8. 시스템 요구사항 할당
+
+| Requirement ID | 관련 시스템 기능 | 할당 시스템 요소 | 설계 근거 ID |
+|---|---|---|---|
+| Req_001 | SYS-F-001 | SYS-E-001, SYS-E-002 | SYS-DES-001 |
+| Req_002 | SYS-F-002 | SYS-E-002~SYS-E-004 | SYS-DES-002 |
+| Req_003 | SYS-F-003 | SYS-E-004 | SYS-DES-003 |
+| Req_004 | SYS-F-004 | SYS-E-004 | SYS-DES-004 |
+| Req_005 | SYS-F-005 | SYS-E-004 | SYS-DES-005 |
+| Req_006 | SYS-F-006 | SYS-E-004 | SYS-DES-006 |
+| Req_007 | SYS-F-007 | SYS-E-004, SYS-E-005 | SYS-DES-007 |
+| Req_008 | SYS-F-008 | SYS-E-004 | SYS-DES-008 |
+| Req_009 | SYS-F-009 | SYS-E-004 | SYS-DES-009 |
+| Req_010 | SYS-F-010 | SYS-E-004, SYS-E-005 | SYS-DES-010 |
+| Req_011 | SYS-F-011 | SYS-E-004, SYS-E-006 | SYS-DES-011 |
+
+## 9. SW 개발로의 할당
+
+시스템 요소 중 입력 ECU와 출력 ECU에 할당된 기능은 다음 단계에서 SW 요구사항으로 전개한다.
+
+| 시스템 기능 그룹 | SW 요구사항 전개 대상 | 후속 문서 |
+|---|---|---|
+| SYS-F-001~SYS-F-002 | 조향 입력 수집, 메시지 생성 및 ECU 간 전달 | `03_SW_Requirements.md` |
+| SYS-F-003~SYS-F-005 | 통신·입력·실행 상태 진단 | `03_SW_Requirements.md` |
+| SYS-F-006~SYS-F-008 | 안전 상태 전환·출력 제한·정상 복귀 | `03_SW_Requirements.md` |
+| SYS-F-009~SYS-F-010 | 조향 출력 계산 및 하드웨어 출력 | `03_SW_Requirements.md` |
+| SYS-F-011 | 상태 및 Fault 정보 제공 | `03_SW_Requirements.md` |
+
+## 10. 설계 원칙
+
+- 입력 ECU와 출력 ECU의 책임을 분리한다.
+- ECU 간 정보는 정의된 시스템 인터페이스를 통해 전달한다.
+- 입력·통신·내부 실행 진단 결과를 통합하여 시스템 상태를 결정한다.
+- Fault 발생 시 정상 제어보다 안전 출력 제한을 우선한다.
+- 정상 상태 복귀는 일시적인 정상 입력이 아니라 정상 조건의 지속성을 기반으로 판단한다.
+- 시스템 요구사항, 시스템 기능 및 시스템 요소의 연결은 `Traceability_Matrix.md`에서 관리한다.
 
 ---
 
-본 문서는 시스템 설계의 단일 기준 문서로 사용한다. 동일한 설계 정보는 다른 문서에 중복 정의하지 않고, 후속 구현 및 시험 문서에서는 본 문서의 Design ID를 참조한다.
+본 문서는 시스템 아키텍처의 기준 문서이다. Alive Counter 판정 횟수, 조향각 유효 범위, WdgM 상태값, 상태 복귀 횟수, SWC 구성, RTE Interface, Runnable, Task Mapping, 내부 변수 및 PWM 계산식은 후속 SW 요구사항과 SW 설계 문서에서 관리한다.
