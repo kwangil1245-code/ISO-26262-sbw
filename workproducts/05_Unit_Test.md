@@ -1,108 +1,196 @@
-﻿# 단위 테스트 (Unit Test)
+# 소프트웨어 단위 검증 명세서 및 결과서
 
-**Document ID**: PROJ-05-UT
-**ISO 26262 Reference**: Part 6, Cl.9 (Software Unit Verification)
-**ASPICE Reference**: SWE.4 (Software Unit Verification)
-**Version**: 2.26
-**Date**: 2026-03-17
-**Status**: Draft
-**Project Title**: 주행 상황 실시간 경고 시스템
-**Subtitle**: 구간 정보 및 긴급차량 접근 기반 앰비언트·클러스터 경보
+**Document ID**: STEER-05-SWUV  
+**ISO 26262 Reference**: Part 6, Cl.9  
+**ASPICE Reference**: SWE.4 (Software Unit Verification)  
+**Version**: 1.0  
+**Date**: 2026-08-24  
+**Status**: Draft / Not Executed  
+**Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템
 
-| V-Model 위치 | 현재 문서 | 상위 연결 | 하위 연결 |
+---
+
+## 1. 문서 목적
+
+본 문서는 `04_SW_Detailed_Design_Unit_Construction.md`의 `UNIT-*`와 `SWD-*`가 올바르게 구현되었는지 검증하기 위한 단위시험, 정적 분석 및 코드 리뷰 기준을 정의한다.
+
+각 Test Case는 검증 대상 `UNIT`, `SWD`, `SWR` ID를 참조한다. 현재 실제 시험 로그와 커버리지 리포트가 첨부되지 않았으므로 모든 동적 시험 결과는 `NE(Not Executed)`로 기록한다. 시험 수행 후 실제 결과, 증적 링크, 수행자 및 판정을 갱신해야 한다.
+
+## 2. 검증 범위
+
+| 검증 대상 | 구현 함수 | 주요 검증 내용 |
+|---|---|---|
+| UNIT-001 | `RE_Can_Tx_10ms()` | 입력 변환, Alive Counter 증가, RTE 출력 |
+| UNIT-002 | `CanMonitor_func()` | RTE Read 실패, Invalid, Timeout 및 정상 갱신 |
+| UNIT-003 | `SafetyPolicy_PreCheck_func()` | Fault 통합, FAIL-SAFE 전환·유지·복귀 |
+| UNIT-004 | `App_IsWdgmFault()` | WdgM 상태별 Fault 판정 |
+| UNIT-005 | `ControlCalc_func()` | 방향, 정지, PWM 계산 및 Fault 출력 |
+| UNIT-006 | `Pwm_Actuator_func()` | PWM·방향 출력과 안전 차단 |
+
+## 3. 검증 전략
+
+| Verification Method ID | 방법 | 적용 목적 | 산출 증적 |
 |---|---|---|---|
-| 우측 하단 (SWE.4) | `05_Unit_Test.md` | `04_SW_Implementation.md` | `06_Integration_Test.md` |
+| VM-01 | 요구사항 기반 단위시험 | 정상·비정상 입력에 대한 기능 확인 | Test Log |
+| VM-02 | 경계값 분석 | 조향 범위, 변화량, Counter 및 복귀 횟수 경계 확인 | Test Log |
+| VM-03 | Fault Injection | RTE 실패, 통신 정지, WdgM Fault 및 출력 차단 확인 | Test Log |
+| VM-04 | 구조적 커버리지 | Statement, Branch 및 MC/DC 커버리지 측정 | Coverage Report |
+| VM-05 | 정적 분석 | 자료형, 범위, 오버플로, 미사용 코드 및 규칙 위반 확인 | Static Analysis Report |
+| VM-06 | 코드 리뷰 | 설계 일치성, 초기화, 오류 처리 및 추적성 검토 | Review Record |
 
----
+### 목표 커버리지
 
-> 경고: `canoe/src/capl` 구현이 추가 개발 또는 업데이트되면, 해당 변경과 직접 연결된 UT 상태, oracle, evidence, executable TEST 자산도 같은 기준선에서 즉시 동기화해야 한다. CAPL과 테스트 문서/자산 중 하나라도 불일치하면 검증 기준은 유효하지 않다.
+| 대상 | 목표 |
+|---|---:|
+| Statement Coverage | 100% |
+| Branch Coverage | 100% |
+| MC/DC Coverage | 안전 관련 의사결정 100% 목표 |
 
-## 단위 테스트 표 (공식 표준 양식)
+> 실제 프로젝트의 ASIL 및 조직 기준이 확정되면 커버리지 목표와 적용 규칙을 재검토한다. 이 표는 현재 단위 검증 목표이며 달성 결과를 의미하지 않는다.
 
-> Closeout 실행 기준:
-> - 각 UT ID는 동일 번호의 CANoe executable TESTCASE와 1:1로 연계한다.
-> - 이번 closeout 판정은 smoke 기준으로 운영하며, 대표 입력 수신, 핵심 상태 반영, testcase 종료 verdict를 PASS 근거로 본다.
-> - 상세 수치와 타이밍은 final closeout 실행 로그 기준으로 완화 해석한다.
-> - `Pass/Fail` 열의 최종 `PASS/FAIL` 기입은 실제 CANoe 실행 로그 확보 후 동일 ID 행에 반영한다.
+## 4. 단위시험 환경
 
-| 노드 | 분류 | 기능명 | 기능 설명 | Pass/Fail | 담당자 | 일자 |
+| 항목 | 구성 |
+|---|---|
+| 시험 대상 | 각 SWC의 C 단위 함수 |
+| 시험 Harness | 함수 직접 호출 및 상태 초기화가 가능한 C Test Harness |
+| RTE 대체 | Rte_Read, Rte_Write, Rte_Call Stub/Mock |
+| BSW 대체 | WdgM 및 IoHwAb Stub/Mock |
+| 관측 대상 | 반환값, RTE 출력값, IoHwAb 호출값, 호출 횟수 및 내부 상태 |
+| 시험 도구 | 프로젝트에서 사용 가능한 단위시험·커버리지 도구로 확정 필요 |
+| 빌드 조건 | 실제 소스와 동일한 자료형·매크로·컴파일 옵션 사용 |
+
+### 공통 판정 상태
+
+| 상태 | 의미 |
+|---|---|
+| PASS | 실제 결과가 기대 결과와 일치하고 필요한 증적이 존재함 |
+| FAIL | 실제 결과가 기대 결과와 다름 |
+| BLOCKED | 환경 또는 결함으로 시험 수행 불가 |
+| NE | 아직 수행하지 않음 |
+
+## 5. UNIT-001 Steering Sensor Unit 시험
+
+| TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
+|---|---|---|---|---|---|
+| UT-IN-001 | Analog Level `0`, Alive Counter `0` | 조향값 `-512`, Counter `0`이 출력되고 내부 Counter는 1 증가 | VM-01, VM-02 | UNIT-001 / SWD-IN-001, SWD-IN-002, SWD-COM-001, SWD-COM-002 / SWR-IN-001, SWR-COM-001 | NE |
+| UT-IN-002 | Analog Level `512` | 조향값 `0`이 출력됨 | VM-01, VM-02 | UNIT-001 / SWD-IN-002 / SWR-IN-001 | NE |
+| UT-IN-003 | Analog Level `1023` | 조향값 `511`이 출력됨 | VM-01, VM-02 | UNIT-001 / SWD-IN-002 / SWR-IN-001 | NE |
+| UT-IN-004 | Runnable 연속 3회 호출 | 조향값이 매회 출력되고 Counter가 `0, 1, 2` 순서로 출력됨 | VM-01 | UNIT-001 / SWD-COM-001, SWD-COM-002 / SWR-COM-001 | NE |
+| UT-IN-005 | Counter `255`에서 Runnable 호출 | 출력 후 `uint8` 규칙에 따라 다음 Counter가 0으로 순환함 | VM-02 | UNIT-001 / SWD-COM-002 / SWR-COM-001 | NE |
+
+## 6. UNIT-002 CAN Monitor Unit 시험
+
+| TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
+|---|---|---|---|---|---|
+| UT-DIAG-001 | 조향값 RTE Read 실패 | Fault TRUE 출력 | VM-03 | UNIT-002 / SWD-DIAG-001, SWD-DIAG-007 / SWR-COM-002, SWR-DIAG-001, SWR-DIAG-003 | NE |
+| UT-DIAG-002 | Alive Counter RTE Read 실패 | Fault TRUE 출력 | VM-03 | UNIT-002 / SWD-DIAG-001, SWD-DIAG-007 / SWR-COM-002, SWR-DIAG-001, SWR-DIAG-003 | NE |
+| UT-DIAG-003 | 조향값 `-513` | Invalid Fault TRUE 출력 | VM-02, VM-03 | UNIT-002 / SWD-DIAG-002, SWD-DIAG-007 / SWR-DIAG-002, SWR-DIAG-003 | NE |
+| UT-DIAG-004 | 조향값 `-512` | Invalid Fault가 설정되지 않음 | VM-02 | UNIT-002 / SWD-DIAG-002 / SWR-DIAG-002 | NE |
+| UT-DIAG-005 | 조향값 `511` | Invalid Fault가 설정되지 않음 | VM-02 | UNIT-002 / SWD-DIAG-002 / SWR-DIAG-002 | NE |
+| UT-DIAG-006 | 조향값 `512` | Invalid Fault TRUE 출력 | VM-02, VM-03 | UNIT-002 / SWD-DIAG-002, SWD-DIAG-007 / SWR-DIAG-002, SWR-DIAG-003 | NE |
+| UT-DIAG-007 | 최초 정상 수신, Counter `10` | Counter 기준값 저장, Fault FALSE | VM-01 | UNIT-002 / SWD-DIAG-003 / SWR-DIAG-001 | NE |
+| UT-DIAG-008 | 기준 Counter `10`, 동일 Counter 1회 추가 수신 | 동일 Counter 횟수 1, Fault FALSE | VM-02 | UNIT-002 / SWD-DIAG-004, SWD-DIAG-005 / SWR-DIAG-001 | NE |
+| UT-DIAG-009 | 기준 Counter `10`, 동일 Counter 2회 추가 수신 | Timeout Fault TRUE | VM-02, VM-03 | UNIT-002 / SWD-DIAG-004, SWD-DIAG-005 / SWR-DIAG-001 | NE |
+| UT-DIAG-010 | 동일 Counter 1회 후 Counter 갱신 | 동일 Counter 횟수 초기화, Fault FALSE | VM-01 | UNIT-002 / SWD-DIAG-006 / SWR-DIAG-001 | NE |
+
+## 7. UNIT-003 Safety Policy Unit 시험
+
+| TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
+|---|---|---|---|---|---|
+| UT-SAFE-001 | 입력 Fault FALSE, WdgM OK, 초기 NORMAL | Checkpoint 보고, NORMAL 유지, 유효 조향값과 출력 허가 제공 | VM-01 | UNIT-003 / SWD-SAFE-001, SWD-SAFE-002, SWD-SAFE-008 / SWR-WDG-001, SWR-SAFE-001, SWR-MON-001 | NE |
+| UT-SAFE-002 | 입력 Fault TRUE, WdgM OK | FAIL-SAFE 전환, 조향값 0, 출력 금지, 복귀 Counter 초기화 | VM-03 | UNIT-003 / SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004 / SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003 | NE |
+| UT-SAFE-003 | 입력 Fault FALSE, WdgM Fault | FAIL-SAFE 전환 및 안전 출력 제공 | VM-03 | UNIT-003 / SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004 / SWR-WDG-002, SWR-SAFE-001, SWR-SAFE-002 | NE |
+| UT-SAFE-004 | FAIL-SAFE에서 정상 조건 1회 | FAIL-SAFE 유지, 복귀 Counter 1 | VM-02 | UNIT-003 / SWD-SAFE-005 / SWR-SAFE-004 | NE |
+| UT-SAFE-005 | FAIL-SAFE에서 정상 조건 2회 | FAIL-SAFE 유지, 복귀 Counter 2 | VM-02 | UNIT-003 / SWD-SAFE-005 / SWR-SAFE-004 | NE |
+| UT-SAFE-006 | FAIL-SAFE에서 정상 조건 연속 3회 | NORMAL 복귀, Counter 초기화, 유효 조향값 및 출력 허가 제공 | VM-02 | UNIT-003 / SWD-SAFE-005, SWD-SAFE-006 / SWR-SAFE-004 | NE |
+| UT-SAFE-007 | 정상 조건 2회 후 Fault 재발 | FAIL-SAFE 유지, 복귀 Counter 0 | VM-03 | UNIT-003 / SWD-SAFE-007 / SWR-SAFE-005 | NE |
+| UT-SAFE-008 | Fault가 지속되는 동안 반복 호출 | FAIL-SAFE와 안전 출력이 계속 유지됨 | VM-03 | UNIT-003 / SWD-SAFE-003, SWD-SAFE-004 / SWR-SAFE-003 | NE |
+
+## 8. UNIT-004 WdgM Status Evaluation Unit 시험
+
+| TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
+|---|---|---|---|---|---|
+| UT-WDG-001 | Global Status `OK` | WdgM Fault FALSE | VM-01 | UNIT-004 / SWD-WDG-001 / SWR-WDG-001, SWR-WDG-002 | NE |
+| UT-WDG-002 | Global Status `FAILED` | WdgM Fault TRUE | VM-03 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | NE |
+| UT-WDG-003 | Global Status `EXPIRED` | WdgM Fault TRUE, 최초 만료 SE ID 조회 | VM-03 | UNIT-004 / SWD-WDG-001, SWD-WDG-002 / SWR-WDG-002, SWR-MON-002 | NE |
+| UT-WDG-004 | Global Status `STOPPED` | WdgM Fault TRUE | VM-03 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | NE |
+| UT-WDG-005 | Fault 조건에 포함되지 않은 상태 | 현재 구현 기준 WdgM Fault FALSE | VM-01 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | NE |
+
+## 9. UNIT-005 Control Calculation Unit 시험
+
+| TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
+|---|---|---|---|---|---|
+| UT-CTRL-001 | Fault TRUE, 임의 조향값 | PWM 0, Left FALSE, Right FALSE, Keep_Go FALSE | VM-03 | UNIT-005 / SWD-CTRL-001 / SWR-SAFE-002, SWR-SAFE-003 | NE |
+| UT-CTRL-002 | 이전값 0, 현재값 2 | 정지, 두 방향 FALSE, PWM 0 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-004, SWD-CTRL-008 / SWR-CTRL-001, SWR-CTRL-002 | NE |
+| UT-CTRL-003 | 이전값 0, 현재값 3 | Right TRUE, Left FALSE, 동작 허가 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-003 / SWR-CTRL-001 | NE |
+| UT-CTRL-004 | 이전값 0, 현재값 `-2` | 정지, 두 방향 FALSE, PWM 0 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-004, SWD-CTRL-008 / SWR-CTRL-002 | NE |
+| UT-CTRL-005 | 이전값 0, 현재값 `-3` | Left TRUE, Right FALSE, 동작 허가 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-003 / SWR-CTRL-001 | NE |
+| UT-CTRL-006 | 절대 변화량 `256` | Relative Duty와 최종 PWM이 정의된 식에 따라 계산됨 | VM-01 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007 / SWR-CTRL-001 | NE |
+| UT-CTRL-007 | 절대 변화량 `512` | 변화량 상한에서 정의된 최대 계산 결과 출력 | VM-02 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007 / SWR-CTRL-001 | NE |
+| UT-CTRL-008 | 절대 변화량이 `512` 초과 | 계산 입력이 512로 제한되고 PWM 상한을 초과하지 않음 | VM-02 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-007 / SWR-CTRL-001 | NE |
+| UT-CTRL-009 | 정상 입력으로 함수 연속 호출 | 매 호출 종료 시 현재 조향값이 다음 호출의 이전값으로 사용되고 RTE 결과 출력 | VM-01 | UNIT-005 / SWD-CTRL-009 / SWR-CTRL-001, SWR-ACT-001 | NE |
+
+## 10. UNIT-006 PWM Actuator Unit 시험
+
+| TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
+|---|---|---|---|---|---|
+| UT-ACT-001 | Keep_Go FALSE, 임의 PWM·방향 입력 | PWM 0, MotorIn1 FALSE, MotorIn2 FALSE, 정지 표시 활성 | VM-03 | UNIT-006 / SWD-ACT-001, SWD-ACT-002, SWD-ACT-004 / SWR-ACT-002, SWR-SAFE-002, SWR-SAFE-003, SWR-MON-003 | NE |
+| UT-ACT-002 | Keep_Go TRUE, Left TRUE, Right FALSE, 유효 PWM | MotorIn1과 MotorIn2 및 PWM 출력이 입력과 일치 | VM-01 | UNIT-006 / SWD-ACT-001, SWD-ACT-003 / SWR-ACT-001 | NE |
+| UT-ACT-003 | Keep_Go TRUE, Left FALSE, Right TRUE, 유효 PWM | 반대 방향 Digital Output과 PWM 출력이 입력과 일치 | VM-01 | UNIT-006 / SWD-ACT-003 / SWR-ACT-001 | NE |
+| UT-ACT-004 | Keep_Go TRUE, PWM 0 | 방향 입력은 전달되며 PWM Duty는 0으로 출력 | VM-02 | UNIT-006 / SWD-ACT-003 / SWR-ACT-001 | NE |
+| UT-ACT-005 | 각 동작 상태 변경 | StopLed 출력이 정의된 정지 상태와 일치 | VM-01 | UNIT-006 / SWD-ACT-004 / SWR-MON-003 | NE |
+
+## 11. 정적 분석 및 코드 리뷰 항목
+
+| Check ID | 검토 항목 | 합격 기준 | 대상 | 상태 |
+|---|---|---|---|---|
+| SA-001 | 컴파일 경고 | 경고 0건 또는 승인된 편차 기록 | UNIT-001부터 UNIT-006 | NE |
+| SA-002 | 자료형과 명시적 형 변환 | 부호·폭 변환으로 인한 데이터 손실 없음 | UNIT-001, UNIT-002, UNIT-005, UNIT-006 | NE |
+| SA-003 | 정수 오버플로 | 조향 차이와 PWM 중간 계산이 자료형 범위 내임 | UNIT-005 | NE |
+| SA-004 | 초기화 | 정적 변수와 출력값이 정의된 초기 상태를 가짐 | UNIT-001부터 UNIT-006 | NE |
+| SA-005 | 반환값 처리 | 안전 관련 RTE Read/Call 실패 처리 누락을 검토함 | UNIT-001부터 UNIT-006 | NE |
+| SA-006 | 도달 불가·미사용 코드 | 정당화되지 않은 Dead Code 없음 | UNIT-001부터 UNIT-006 | NE |
+| SA-007 | 설계 일치성 | 코드가 관련 `SWD-*`의 처리 순서와 조건을 구현함 | UNIT-001부터 UNIT-006 | NE |
+| SA-008 | 인터페이스 일치성 | Port, Data Element, 자료형 및 방향이 `SW-IF-*`와 일치함 | UNIT-001부터 UNIT-006 | NE |
+| SA-009 | 안전 출력 우선성 | Fault 경로에서 정상 제어보다 출력 차단이 우선함 | UNIT-003, UNIT-005, UNIT-006 | NE |
+| SA-010 | 코딩 규칙 | 프로젝트에서 선정한 MISRA C 규칙 위반과 편차가 관리됨 | UNIT-001부터 UNIT-006 | NE |
+
+## 12. 상세설계 커버리지
+
+| Unit | 검증 대상 상세설계 | 관련 Test/Check |
+|---|---|---|
+| UNIT-001 | SWD-IN-001, SWD-IN-002, SWD-COM-001, SWD-COM-002 | UT-IN-001부터 UT-IN-005, SA-001부터 SA-008 |
+| UNIT-002 | SWD-DIAG-001, SWD-DIAG-002, SWD-DIAG-003, SWD-DIAG-004, SWD-DIAG-005, SWD-DIAG-006, SWD-DIAG-007 | UT-DIAG-001부터 UT-DIAG-010, SA-001부터 SA-008 |
+| UNIT-003 | SWD-SAFE-001, SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004, SWD-SAFE-005, SWD-SAFE-006, SWD-SAFE-007, SWD-SAFE-008 | UT-SAFE-001부터 UT-SAFE-008, SA-001, SA-004부터 SA-009 |
+| UNIT-004 | SWD-WDG-001, SWD-WDG-002 | UT-WDG-001부터 UT-WDG-005, SA-001, SA-005부터 SA-008 |
+| UNIT-005 | SWD-CTRL-001, SWD-CTRL-002, SWD-CTRL-003, SWD-CTRL-004, SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007, SWD-CTRL-008, SWD-CTRL-009 | UT-CTRL-001부터 UT-CTRL-009, SA-001부터 SA-009 |
+| UNIT-006 | SWD-ACT-001, SWD-ACT-002, SWD-ACT-003, SWD-ACT-004 | UT-ACT-001부터 UT-ACT-005, SA-001, SA-002, SA-004부터 SA-009 |
+
+## 13. 시험 결과 기록
+
+| TC ID | 실제 결과 | 판정 | 증적 경로 | 수행자 | 수행일 | 비고 |
 |---|---|---|---|---|---|---|
-| 제어기 | 제어 | UT_001 - CGW (`CHS_GW`) | 차량 기본 입력과 차체 상태 정보를 수신하여 100ms 주기로 경계 경로에 전달 | Ready |  |  |
-|  |  | UT_002 - CGW (`INFOTAINMENT_GW`) | 구간, 방향, 거리(m), 제한속도(km/h) 정보를 수신하여 100ms 주기로 표시 경로에 전달 | Ready |  |  |
-|  |  | UT_003 - ADAS (`ADAS_WARN_CTRL`) | 주행 상태와 제한속도(km/h)를 반영하여 150ms 이내 기본 경고 상태를 판단 | Ready |  |  |
-|  |  | UT_004 - V2X (`EMS_ALERT`, V2 확장) | 긴급차량 접근 정보를 수신하고 1000ms 기준 유지, 해제, 타임아웃을 관리 | Ready |  |  |
-|  |  | UT_005 - ADAS (`WARN_ARB_MGR`, V2 확장) | 긴급차량 방향과 접근 시간을 반영하여 위험도와 감속 보조를 판단 | Ready |  |  |
-|  |  | UT_006 - ADAS (`ADAS_WARN_CTRL`, ADAS 객체 확장) | 주변 객체와 센서 상태를 반영하여 위험 경고를 판단 | Ready |  |  |
-|  |  | UT_007 - CLU (`CLU_HMI_CTRL`, 차량 경보 편의 확장) | 운전자 상태와 차량 맥락을 반영하여 경고 표시와 안내를 보정 | Ready |  |  |
-|  |  | UT_008 - CGW (`DOMAIN_BOUNDARY_MGR`, 경고 강건성·인지성 확장) | 입력 신선도와 서비스 상태를 반영하여 경고 강등과 경계 상태를 유지 | Ready |  |  |
-|  |  | UT_009 - IVI (`NAV_CTX_MGR`) | 구간, 방향, 거리, 제한속도 정보를 받아 주행 맥락을 계산 | Ready |  |  |
-|  |  | UT_010 - V2X (`EMS_ALERT`) | 경찰, 구급 긴급 이벤트의 송신, 수신, 해제, 1000ms 타임아웃 동작을 검증 | Ready |  |  |
-|  |  | UT_011 - ADAS (`WARN_ARB_MGR`) | 긴급 경고와 일반 경고가 겹칠 때 우선순위를 결정 | Ready |  |  |
-|  |  | UT_012 - BCM (`BODY_GW`) | 경고 결과를 50ms 주기로 앰비언트 출력 경로에 전달 | Ready |  |  |
-|  |  | UT_013 - IVI (`IVI_GW`) | 경고 결과를 50ms 주기로 클러스터 표시 경로에 전달 | Ready |  |  |
-|  |  | UT_014 - BCM (`AMBIENT_CTRL`) | 경고 상태에 맞는 앰비언트 색상과 패턴을 50ms 주기로 출력 | Ready |  |  |
-|  |  | UT_015 - CLU (`CLU_HMI_CTRL`) | 경고 문구와 방향 표시를 50ms 주기로 출력 | Ready |  |  |
-|  |  | UT_016 - CGW (`CHS_GW`, 제동 확장) | 전동 주차와 제동 보조 상태를 수신하여 경고 판단 경로에 전달 | Ready |  |  |
-|  |  | UT_017 - CGW (`CHS_GW`, 차체 제어 확장) | 차체안정과 승차 제어 상태를 수신하여 경고 판단 경로에 전달 | Ready |  |  |
-|  |  | UT_018 - BCM (`BODY_GW`, 출입 개폐 확장) | 출입문과 테일게이트 상태를 수신하여 차량 상태에 반영 | Ready |  |  |
-|  |  | UT_019 - BCM (`BODY_GW`, 탑승자 보호 확장) | 에어백과 탑승자 감지 상태를 수신하여 차량 상태에 반영 | Ready |  |  |
-|  |  | UT_020 - BCM (`BODY_GW`, 실내 편의 확장) | 조명, 공조, 시트, 선루프 상태를 수신하여 차량 상태에 반영 | Ready |  |  |
-|  |  | UT_021 - IVI (`IVI_GW`, 표시·안내 확장) | HUD, 음향, 텔레매틱스 상태를 수신하여 화면과 안내 기능에 반영 | Ready |  |  |
-|  |  | UT_022 - IVI (`IVI_GW`, 서비스 접근 확장) | 디지털 키와 차량 서비스 상태를 수신하여 사용자 안내에 반영 | Ready |  |  |
-|  |  | UT_023 - ADAS (`ADAS_WARN_CTRL`, 주행 보조 확장) | 주행 보조 상태를 수신하여 위험 판단에 반영 | Ready |  |  |
-|  |  | UT_024 - ADAS (`ADAS_WARN_CTRL`, 주차·인지 확장) | 주차 보조와 주변 인지 상태를 수신하여 위험 판단에 반영 | Ready |  |  |
-|  |  | UT_025 - CGW (경고 전달 경계 관리, 백본 서비스 확장) | 백본 및 경고 서비스 상태 정보를 수신하여 전달 경계 상태와 fail-safe 동작에 반영 | Ready |  |  |
-|  |  | UT_026 - CGW (`DOMAIN_ROUTER`, 구동 확장) | 모터와 인버터 상태를 수신하여 차량 구동 상태에 반영 | Ready |  |  |
-|  |  | UT_027 - CGW (`DOMAIN_ROUTER`, 전력·충전 확장) | 전력 변환과 충전 상태를 수신하여 차량 구동 상태에 반영 | Ready |  |  |
-| 가상 노드 (Simulator) | 입력 | UT_028 - Vehicle/Steering Input | 차량 속도(km/h), 주행 상태, 조향 각도 입력 정보를 생성 | Ready |  |  |
-|  |  | UT_029 - Nav Context Input | 구간, 방향, 거리(m), 제한속도(km/h) 입력 정보를 생성 | Ready |  |  |
-|  |  | UT_030 - Emergency Input | 경찰, 구급 긴급 접근 정보와 도착예정시간(s) 입력을 생성 | Ready |  |  |
-|  |  | UT_031 - EPB Input | 전동 주차 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_032 - EHB Input | 제동 보조 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_033 - VSM Input | 차체안정 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_034 - ECS Input | 차고 제어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_035 - CDC Input | 감쇠 제어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_036 - DOOR_FL Input | 좌전 도어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_037 - DOOR_FR Input | 우전 도어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_038 - DOOR_RL Input | 좌후 도어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_039 - DOOR_RR Input | 우후 도어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_040 - TGM Input | 테일게이트 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_041 - ACU Input | 에어백 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_042 - ODS Input | 탑승자 감지 상태를 입력 | Ready |  |  |
-|  |  | UT_043 - AFLS Input | 전조등 방향 제어 상태를 입력 | Ready |  |  |
-|  |  | UT_044 - AHLS Input | 전조등 높이 제어 상태를 입력 | Ready |  |  |
-|  |  | UT_045 - DATC Input | 공조 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_046 - SEAT_DRV Input | 운전석 시트 편의 상태를 입력 | Ready |  |  |
-|  |  | UT_047 - SEAT_PASS Input | 동승석 시트 편의 상태를 입력 | Ready |  |  |
-|  |  | UT_048 - SRF Input | 선루프 ECU 상태를 입력 | Ready |  |  |
-|  |  | UT_049 - HUD Input | 전면 표시 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_050 - AMP Input | 음향 출력 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_051 - TMU Input | 텔레매틱스 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_052 - SCC Input | 주행 보조 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_053 - PGS Input | 주차 보조 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_054 - PUS Input | 주차 초음파 센서 상태를 입력 | Ready |  |  |
-|  |  | UT_055 - AVM Input | 주변 영상 ECU 상태를 입력 | Ready |  |  |
-|  |  | UT_056 - FCAM Input | 전방 카메라 센서 상태를 입력 | Ready |  |  |
-|  |  | UT_057 - FRADAR Input | 전방 레이더 센서 상태를 입력 | Ready |  |  |
-|  |  | UT_058 - SRR_FL Input | 좌전 측후방 레이더 상태를 입력 | Ready |  |  |
-|  |  | UT_059 - SRR_FR Input | 우전 측후방 레이더 상태를 입력 | Ready |  |  |
-|  |  | UT_060 - SRR_RL Input | 좌후 측후방 레이더 상태를 입력 | Ready |  |  |
-|  |  | UT_061 - SRR_RR Input | 우후 측후방 레이더 상태를 입력 | Ready |  |  |
-|  |  | UT_062 - IBOX Input | 차량 서비스 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_063 - SGW Input | 보안 게이트웨이 상태를 입력하여 진단 보안 상태와 경로 소유 해석에 반영 | Ready |  |  |
-|  |  | UT_064 - DCM Input | 진단 제어 상태를 입력하여 진단 요청/응답 요약과 서비스 판단 상태에 반영 | Ready |  |  |
-|  |  | UT_065 - ETHB Input | 백본 서비스 상태를 입력 | Ready |  |  |
-|  |  | UT_066 - OBC Input | 충전 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_067 - DCDC Input | 전력 변환 ECU 상태를 입력 | Ready |  |  |
-|  |  | UT_068 - MCU Input | 모터 제어 ECU 상태 정보를 입력 | Ready |  |  |
-|  |  | UT_069 - INVERTER Input | 인버터 상태를 입력 | Ready |  |  |
-|  | 출력 | UT_070 - BCM (앰비언트 경고 출력) | 경고 상태에 따라 앰비언트 모드, 색상, 패턴을 출력 | Ready |  |  |
-|  |  | UT_071 - IVI (클러스터/HMI 출력) | 경고 문구, 거리/방향, 팝업, 테마, 오디오 포커스 정보를 생성하여 표시 채널에 전달 | Ready |  |  |
-|  |  | UT_072 - CLU (클러스터 표시 처리) | 경고 문구와 팝업, 테마 정보를 수신하여 클러스터 표시에 반영 | Ready |  |  |
-|  |  | UT_073 - HUD (전면 표시 처리) | 경고 문구와 팝업, 경로, 테마 정보를 수신하여 전면 표시에 반영 | Ready |  |  |
-|  |  | UT_074 - AMP (오디오 안내 처리) | 오디오 포커스와 음성안내, TTS 상태를 수신하여 오디오 안내에 반영 | Ready |  |  |
-|  |  | UT_075 - ADAS (자동 감속 보조 요청 출력) | 위험도와 fail-safe 상태에 따라 자동 감속 보조 요청을 출력 | Ready |  |  |
-|  |  | UT_076 - V2X (경찰 긴급 알림 송신) | 경찰 긴급 알림을 외부 송신 프레임으로 전송 | Ready |  |  |
-|  |  | UT_077 - V2X (구급 긴급 알림 송신) | 구급 긴급 알림을 외부 송신 프레임으로 전송 | Ready |  |  |
+| 시험 수행 후 입력 | 시험 수행 후 입력 | NE | Test Log 또는 Screenshot |  |  |  |
+
+### 결과 요약
+
+| 항목 | 전체 | PASS | FAIL | BLOCKED | NE |
+|---|---:|---:|---:|---:|---:|
+| 동적 단위시험 | 42 | 0 | 0 | 0 | 42 |
+| 정적 분석·코드 리뷰 | 10 | 0 | 0 | 0 | 10 |
+
+> 위 수치는 현재 명세에 정의된 시험 항목의 상태 집계이다. 시험 수행 전이므로 품질 합격을 의미하지 않는다.
+
+## 14. 완료 기준
+
+- 모든 동적 Test Case가 수행되고 PASS 또는 승인된 편차 상태여야 한다.
+- FAIL 및 BLOCKED 항목은 결함 ID와 연결되어 처리 상태가 관리되어야 한다.
+- 목표 Statement, Branch 및 MC/DC 커버리지 결과가 첨부되어야 한다.
+- 정적 분석 경고와 코딩 규칙 위반은 수정하거나 편차 사유를 승인받아야 한다.
+- 변경된 `SWR-*`, `SWD-*` 및 소스코드에 대해 영향받는 Test Case를 재수행해야 한다.
+- 시험 결과와 증적은 Test Case ID를 통해 재현 가능해야 한다.
 
 ---
+
+본 문서는 SWE.4 단위 검증의 기준 산출물이다. 검증 완료 주장은 실제 Test Log, Coverage Report, Static Analysis Report 및 Review Record가 연결된 이후에만 가능하다.
