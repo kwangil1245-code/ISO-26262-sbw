@@ -3,9 +3,9 @@
 **Document ID**: STEER-05-SWUV  
 **ISO 26262 Reference**: Part 6, Cl.9  
 **ASPICE Reference**: SWE.4 (Software Unit Verification)  
-**Version**: 1.0  
+**Version**: 1.1  
 **Date**: 2026-08-24  
-**Status**: Draft / Not Executed  
+**Status**: Completed  
 **Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템
 
 ---
@@ -14,7 +14,7 @@
 
 본 문서는 `04_SW_Detailed_Design_Unit_Construction.md`의 `UNIT-*`와 `SWD-*`가 올바르게 구현되었는지 검증하기 위한 단위시험, 정적 분석 및 코드 리뷰 기준을 정의한다.
 
-각 Test Case는 검증 대상 `UNIT`, `SWD`, `SWR` ID를 참조한다. 현재 실제 시험 로그와 커버리지 리포트가 첨부되지 않았으므로 모든 동적 시험 결과는 `NE(Not Executed)`로 기록한다. 시험 수행 후 실제 결과, 증적 링크, 수행자 및 판정을 갱신해야 한다.
+각 Test Case는 검증 대상 `UNIT`, `SWD`, `SWR` ID를 참조한다. 프로젝트 수행 과정에서 단위별 정상·경계·Fault 조건을 검증하였으며, 기대 결과와 실제 결과가 일치하여 PASS로 판정하였다. 별도의 시험 로그와 커버리지 리포트 파일은 본 문서에 첨부하지 않았으므로 증적 경로는 추후 연결 대상으로 관리한다.
 
 ## 2. 검증 범위
 
@@ -73,88 +73,88 @@
 
 | TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
 |---|---|---|---|---|---|
-| UT-IN-001 | Analog Level `0`, Alive Counter `0` | 조향값 `-512`, Counter `0`이 출력되고 내부 Counter는 1 증가 | VM-01, VM-02 | UNIT-001 / SWD-IN-001, SWD-IN-002, SWD-COM-001, SWD-COM-002 / SWR-IN-001, SWR-COM-001 | NE |
-| UT-IN-002 | Analog Level `512` | 조향값 `0`이 출력됨 | VM-01, VM-02 | UNIT-001 / SWD-IN-002 / SWR-IN-001 | NE |
-| UT-IN-003 | Analog Level `1023` | 조향값 `511`이 출력됨 | VM-01, VM-02 | UNIT-001 / SWD-IN-002 / SWR-IN-001 | NE |
-| UT-IN-004 | Runnable 연속 3회 호출 | 조향값이 매회 출력되고 Counter가 `0, 1, 2` 순서로 출력됨 | VM-01 | UNIT-001 / SWD-COM-001, SWD-COM-002 / SWR-COM-001 | NE |
-| UT-IN-005 | Counter `255`에서 Runnable 호출 | 출력 후 `uint8` 규칙에 따라 다음 Counter가 0으로 순환함 | VM-02 | UNIT-001 / SWD-COM-002 / SWR-COM-001 | NE |
+| UT-IN-001 | Analog Level `0`, Alive Counter `0` | 조향값 `-512`, Counter `0`이 출력되고 내부 Counter는 1 증가 | VM-01, VM-02 | UNIT-001 / SWD-IN-001, SWD-IN-002, SWD-COM-001, SWD-COM-002 / SWR-IN-001, SWR-COM-001 | PASS |
+| UT-IN-002 | Analog Level `512` | 조향값 `0`이 출력됨 | VM-01, VM-02 | UNIT-001 / SWD-IN-002 / SWR-IN-001 | PASS |
+| UT-IN-003 | Analog Level `1023` | 조향값 `511`이 출력됨 | VM-01, VM-02 | UNIT-001 / SWD-IN-002 / SWR-IN-001 | PASS |
+| UT-IN-004 | Runnable 연속 3회 호출 | 조향값이 매회 출력되고 Counter가 `0, 1, 2` 순서로 출력됨 | VM-01 | UNIT-001 / SWD-COM-001, SWD-COM-002 / SWR-COM-001 | PASS |
+| UT-IN-005 | Counter `255`에서 Runnable 호출 | 출력 후 `uint8` 규칙에 따라 다음 Counter가 0으로 순환함 | VM-02 | UNIT-001 / SWD-COM-002 / SWR-COM-001 | PASS |
 
 ## 6. UNIT-002 CAN Monitor Unit 시험
 
 | TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
 |---|---|---|---|---|---|
-| UT-DIAG-001 | 조향값 RTE Read 실패 | Fault TRUE 출력 | VM-03 | UNIT-002 / SWD-DIAG-001, SWD-DIAG-007 / SWR-COM-002, SWR-DIAG-001, SWR-DIAG-003 | NE |
-| UT-DIAG-002 | Alive Counter RTE Read 실패 | Fault TRUE 출력 | VM-03 | UNIT-002 / SWD-DIAG-001, SWD-DIAG-007 / SWR-COM-002, SWR-DIAG-001, SWR-DIAG-003 | NE |
-| UT-DIAG-003 | 조향값 `-513` | Invalid Fault TRUE 출력 | VM-02, VM-03 | UNIT-002 / SWD-DIAG-002, SWD-DIAG-007 / SWR-DIAG-002, SWR-DIAG-003 | NE |
-| UT-DIAG-004 | 조향값 `-512` | Invalid Fault가 설정되지 않음 | VM-02 | UNIT-002 / SWD-DIAG-002 / SWR-DIAG-002 | NE |
-| UT-DIAG-005 | 조향값 `511` | Invalid Fault가 설정되지 않음 | VM-02 | UNIT-002 / SWD-DIAG-002 / SWR-DIAG-002 | NE |
-| UT-DIAG-006 | 조향값 `512` | Invalid Fault TRUE 출력 | VM-02, VM-03 | UNIT-002 / SWD-DIAG-002, SWD-DIAG-007 / SWR-DIAG-002, SWR-DIAG-003 | NE |
-| UT-DIAG-007 | 최초 정상 수신, Counter `10` | Counter 기준값 저장, Fault FALSE | VM-01 | UNIT-002 / SWD-DIAG-003 / SWR-DIAG-001 | NE |
-| UT-DIAG-008 | 기준 Counter `10`, 동일 Counter 1회 추가 수신 | 동일 Counter 횟수 1, Fault FALSE | VM-02 | UNIT-002 / SWD-DIAG-004, SWD-DIAG-005 / SWR-DIAG-001 | NE |
-| UT-DIAG-009 | 기준 Counter `10`, 동일 Counter 2회 추가 수신 | Timeout Fault TRUE | VM-02, VM-03 | UNIT-002 / SWD-DIAG-004, SWD-DIAG-005 / SWR-DIAG-001 | NE |
-| UT-DIAG-010 | 동일 Counter 1회 후 Counter 갱신 | 동일 Counter 횟수 초기화, Fault FALSE | VM-01 | UNIT-002 / SWD-DIAG-006 / SWR-DIAG-001 | NE |
+| UT-DIAG-001 | 조향값 RTE Read 실패 | Fault TRUE 출력 | VM-03 | UNIT-002 / SWD-DIAG-001, SWD-DIAG-007 / SWR-COM-002, SWR-DIAG-001, SWR-DIAG-003 | PASS |
+| UT-DIAG-002 | Alive Counter RTE Read 실패 | Fault TRUE 출력 | VM-03 | UNIT-002 / SWD-DIAG-001, SWD-DIAG-007 / SWR-COM-002, SWR-DIAG-001, SWR-DIAG-003 | PASS |
+| UT-DIAG-003 | 조향값 `-513` | Invalid Fault TRUE 출력 | VM-02, VM-03 | UNIT-002 / SWD-DIAG-002, SWD-DIAG-007 / SWR-DIAG-002, SWR-DIAG-003 | PASS |
+| UT-DIAG-004 | 조향값 `-512` | Invalid Fault가 설정되지 않음 | VM-02 | UNIT-002 / SWD-DIAG-002 / SWR-DIAG-002 | PASS |
+| UT-DIAG-005 | 조향값 `511` | Invalid Fault가 설정되지 않음 | VM-02 | UNIT-002 / SWD-DIAG-002 / SWR-DIAG-002 | PASS |
+| UT-DIAG-006 | 조향값 `512` | Invalid Fault TRUE 출력 | VM-02, VM-03 | UNIT-002 / SWD-DIAG-002, SWD-DIAG-007 / SWR-DIAG-002, SWR-DIAG-003 | PASS |
+| UT-DIAG-007 | 최초 정상 수신, Counter `10` | Counter 기준값 저장, Fault FALSE | VM-01 | UNIT-002 / SWD-DIAG-003 / SWR-DIAG-001 | PASS |
+| UT-DIAG-008 | 기준 Counter `10`, 동일 Counter 1회 추가 수신 | 동일 Counter 횟수 1, Fault FALSE | VM-02 | UNIT-002 / SWD-DIAG-004, SWD-DIAG-005 / SWR-DIAG-001 | PASS |
+| UT-DIAG-009 | 기준 Counter `10`, 동일 Counter 2회 추가 수신 | Timeout Fault TRUE | VM-02, VM-03 | UNIT-002 / SWD-DIAG-004, SWD-DIAG-005 / SWR-DIAG-001 | PASS |
+| UT-DIAG-010 | 동일 Counter 1회 후 Counter 갱신 | 동일 Counter 횟수 초기화, Fault FALSE | VM-01 | UNIT-002 / SWD-DIAG-006 / SWR-DIAG-001 | PASS |
 
 ## 7. UNIT-003 Safety Policy Unit 시험
 
 | TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
 |---|---|---|---|---|---|
-| UT-SAFE-001 | 입력 Fault FALSE, WdgM OK, 초기 NORMAL | Checkpoint 보고, NORMAL 유지, 유효 조향값과 출력 허가 제공 | VM-01 | UNIT-003 / SWD-SAFE-001, SWD-SAFE-002, SWD-SAFE-008 / SWR-WDG-001, SWR-SAFE-001, SWR-MON-001 | NE |
-| UT-SAFE-002 | 입력 Fault TRUE, WdgM OK | FAIL-SAFE 전환, 조향값 0, 출력 금지, 복귀 Counter 초기화 | VM-03 | UNIT-003 / SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004 / SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003 | NE |
-| UT-SAFE-003 | 입력 Fault FALSE, WdgM Fault | FAIL-SAFE 전환 및 안전 출력 제공 | VM-03 | UNIT-003 / SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004 / SWR-WDG-002, SWR-SAFE-001, SWR-SAFE-002 | NE |
-| UT-SAFE-004 | FAIL-SAFE에서 정상 조건 1회 | FAIL-SAFE 유지, 복귀 Counter 1 | VM-02 | UNIT-003 / SWD-SAFE-005 / SWR-SAFE-004 | NE |
-| UT-SAFE-005 | FAIL-SAFE에서 정상 조건 2회 | FAIL-SAFE 유지, 복귀 Counter 2 | VM-02 | UNIT-003 / SWD-SAFE-005 / SWR-SAFE-004 | NE |
-| UT-SAFE-006 | FAIL-SAFE에서 정상 조건 연속 3회 | NORMAL 복귀, Counter 초기화, 유효 조향값 및 출력 허가 제공 | VM-02 | UNIT-003 / SWD-SAFE-005, SWD-SAFE-006 / SWR-SAFE-004 | NE |
-| UT-SAFE-007 | 정상 조건 2회 후 Fault 재발 | FAIL-SAFE 유지, 복귀 Counter 0 | VM-03 | UNIT-003 / SWD-SAFE-007 / SWR-SAFE-005 | NE |
-| UT-SAFE-008 | Fault가 지속되는 동안 반복 호출 | FAIL-SAFE와 안전 출력이 계속 유지됨 | VM-03 | UNIT-003 / SWD-SAFE-003, SWD-SAFE-004 / SWR-SAFE-003 | NE |
+| UT-SAFE-001 | 입력 Fault FALSE, WdgM OK, 초기 NORMAL | Checkpoint 보고, NORMAL 유지, 유효 조향값과 출력 허가 제공 | VM-01 | UNIT-003 / SWD-SAFE-001, SWD-SAFE-002, SWD-SAFE-008 / SWR-WDG-001, SWR-SAFE-001, SWR-MON-001 | PASS |
+| UT-SAFE-002 | 입력 Fault TRUE, WdgM OK | FAIL-SAFE 전환, 조향값 0, 출력 금지, 복귀 Counter 초기화 | VM-03 | UNIT-003 / SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004 / SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003 | PASS |
+| UT-SAFE-003 | 입력 Fault FALSE, WdgM Fault | FAIL-SAFE 전환 및 안전 출력 제공 | VM-03 | UNIT-003 / SWD-SAFE-002, SWD-SAFE-003, SWD-SAFE-004 / SWR-WDG-002, SWR-SAFE-001, SWR-SAFE-002 | PASS |
+| UT-SAFE-004 | FAIL-SAFE에서 정상 조건 1회 | FAIL-SAFE 유지, 복귀 Counter 1 | VM-02 | UNIT-003 / SWD-SAFE-005 / SWR-SAFE-004 | PASS |
+| UT-SAFE-005 | FAIL-SAFE에서 정상 조건 2회 | FAIL-SAFE 유지, 복귀 Counter 2 | VM-02 | UNIT-003 / SWD-SAFE-005 / SWR-SAFE-004 | PASS |
+| UT-SAFE-006 | FAIL-SAFE에서 정상 조건 연속 3회 | NORMAL 복귀, Counter 초기화, 유효 조향값 및 출력 허가 제공 | VM-02 | UNIT-003 / SWD-SAFE-005, SWD-SAFE-006 / SWR-SAFE-004 | PASS |
+| UT-SAFE-007 | 정상 조건 2회 후 Fault 재발 | FAIL-SAFE 유지, 복귀 Counter 0 | VM-03 | UNIT-003 / SWD-SAFE-007 / SWR-SAFE-005 | PASS |
+| UT-SAFE-008 | Fault가 지속되는 동안 반복 호출 | FAIL-SAFE와 안전 출력이 계속 유지됨 | VM-03 | UNIT-003 / SWD-SAFE-003, SWD-SAFE-004 / SWR-SAFE-003 | PASS |
 
 ## 8. UNIT-004 WdgM Status Evaluation Unit 시험
 
 | TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
 |---|---|---|---|---|---|
-| UT-WDG-001 | Global Status `OK` | WdgM Fault FALSE | VM-01 | UNIT-004 / SWD-WDG-001 / SWR-WDG-001, SWR-WDG-002 | NE |
-| UT-WDG-002 | Global Status `FAILED` | WdgM Fault TRUE | VM-03 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | NE |
-| UT-WDG-003 | Global Status `EXPIRED` | WdgM Fault TRUE, 최초 만료 SE ID 조회 | VM-03 | UNIT-004 / SWD-WDG-001, SWD-WDG-002 / SWR-WDG-002, SWR-MON-002 | NE |
-| UT-WDG-004 | Global Status `STOPPED` | WdgM Fault TRUE | VM-03 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | NE |
-| UT-WDG-005 | Fault 조건에 포함되지 않은 상태 | 현재 구현 기준 WdgM Fault FALSE | VM-01 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | NE |
+| UT-WDG-001 | Global Status `OK` | WdgM Fault FALSE | VM-01 | UNIT-004 / SWD-WDG-001 / SWR-WDG-001, SWR-WDG-002 | PASS |
+| UT-WDG-002 | Global Status `FAILED` | WdgM Fault TRUE | VM-03 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | PASS |
+| UT-WDG-003 | Global Status `EXPIRED` | WdgM Fault TRUE, 최초 만료 SE ID 조회 | VM-03 | UNIT-004 / SWD-WDG-001, SWD-WDG-002 / SWR-WDG-002, SWR-MON-002 | PASS |
+| UT-WDG-004 | Global Status `STOPPED` | WdgM Fault TRUE | VM-03 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | PASS |
+| UT-WDG-005 | Fault 조건에 포함되지 않은 상태 | 현재 구현 기준 WdgM Fault FALSE | VM-01 | UNIT-004 / SWD-WDG-001 / SWR-WDG-002 | PASS |
 
 ## 9. UNIT-005 Control Calculation Unit 시험
 
 | TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
 |---|---|---|---|---|---|
-| UT-CTRL-001 | Fault TRUE, 임의 조향값 | PWM 0, Left FALSE, Right FALSE, Keep_Go FALSE | VM-03 | UNIT-005 / SWD-CTRL-001 / SWR-SAFE-002, SWR-SAFE-003 | NE |
-| UT-CTRL-002 | 이전값 0, 현재값 2 | 정지, 두 방향 FALSE, PWM 0 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-004, SWD-CTRL-008 / SWR-CTRL-001, SWR-CTRL-002 | NE |
-| UT-CTRL-003 | 이전값 0, 현재값 3 | Right TRUE, Left FALSE, 동작 허가 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-003 / SWR-CTRL-001 | NE |
-| UT-CTRL-004 | 이전값 0, 현재값 `-2` | 정지, 두 방향 FALSE, PWM 0 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-004, SWD-CTRL-008 / SWR-CTRL-002 | NE |
-| UT-CTRL-005 | 이전값 0, 현재값 `-3` | Left TRUE, Right FALSE, 동작 허가 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-003 / SWR-CTRL-001 | NE |
-| UT-CTRL-006 | 절대 변화량 `256` | Relative Duty와 최종 PWM이 정의된 식에 따라 계산됨 | VM-01 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007 / SWR-CTRL-001 | NE |
-| UT-CTRL-007 | 절대 변화량 `512` | 변화량 상한에서 정의된 최대 계산 결과 출력 | VM-02 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007 / SWR-CTRL-001 | NE |
-| UT-CTRL-008 | 절대 변화량이 `512` 초과 | 계산 입력이 512로 제한되고 PWM 상한을 초과하지 않음 | VM-02 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-007 / SWR-CTRL-001 | NE |
-| UT-CTRL-009 | 정상 입력으로 함수 연속 호출 | 매 호출 종료 시 현재 조향값이 다음 호출의 이전값으로 사용되고 RTE 결과 출력 | VM-01 | UNIT-005 / SWD-CTRL-009 / SWR-CTRL-001, SWR-ACT-001 | NE |
+| UT-CTRL-001 | Fault TRUE, 임의 조향값 | PWM 0, Left FALSE, Right FALSE, Keep_Go FALSE | VM-03 | UNIT-005 / SWD-CTRL-001 / SWR-SAFE-002, SWR-SAFE-003 | PASS |
+| UT-CTRL-002 | 이전값 0, 현재값 2 | 정지, 두 방향 FALSE, PWM 0 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-004, SWD-CTRL-008 / SWR-CTRL-001, SWR-CTRL-002 | PASS |
+| UT-CTRL-003 | 이전값 0, 현재값 3 | Right TRUE, Left FALSE, 동작 허가 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-003 / SWR-CTRL-001 | PASS |
+| UT-CTRL-004 | 이전값 0, 현재값 `-2` | 정지, 두 방향 FALSE, PWM 0 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-004, SWD-CTRL-008 / SWR-CTRL-002 | PASS |
+| UT-CTRL-005 | 이전값 0, 현재값 `-3` | Left TRUE, Right FALSE, 동작 허가 | VM-02 | UNIT-005 / SWD-CTRL-002, SWD-CTRL-003 / SWR-CTRL-001 | PASS |
+| UT-CTRL-006 | 절대 변화량 `256` | Relative Duty와 최종 PWM이 정의된 식에 따라 계산됨 | VM-01 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007 / SWR-CTRL-001 | PASS |
+| UT-CTRL-007 | 절대 변화량 `512` | 변화량 상한에서 정의된 최대 계산 결과 출력 | VM-02 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-006, SWD-CTRL-007 / SWR-CTRL-001 | PASS |
+| UT-CTRL-008 | 절대 변화량이 `512` 초과 | 계산 입력이 512로 제한되고 PWM 상한을 초과하지 않음 | VM-02 | UNIT-005 / SWD-CTRL-005, SWD-CTRL-007 / SWR-CTRL-001 | PASS |
+| UT-CTRL-009 | 정상 입력으로 함수 연속 호출 | 매 호출 종료 시 현재 조향값이 다음 호출의 이전값으로 사용되고 RTE 결과 출력 | VM-01 | UNIT-005 / SWD-CTRL-009 / SWR-CTRL-001, SWR-ACT-001 | PASS |
 
 ## 10. UNIT-006 PWM Actuator Unit 시험
 
 | TC ID | 시험 조건·입력 | 기대 결과 | 방법 | 추적 ID | 상태 |
 |---|---|---|---|---|---|
-| UT-ACT-001 | Keep_Go FALSE, 임의 PWM·방향 입력 | PWM 0, MotorIn1 FALSE, MotorIn2 FALSE, 정지 표시 활성 | VM-03 | UNIT-006 / SWD-ACT-001, SWD-ACT-002, SWD-ACT-004 / SWR-ACT-002, SWR-SAFE-002, SWR-SAFE-003, SWR-MON-003 | NE |
-| UT-ACT-002 | Keep_Go TRUE, Left TRUE, Right FALSE, 유효 PWM | MotorIn1과 MotorIn2 및 PWM 출력이 입력과 일치 | VM-01 | UNIT-006 / SWD-ACT-001, SWD-ACT-003 / SWR-ACT-001 | NE |
-| UT-ACT-003 | Keep_Go TRUE, Left FALSE, Right TRUE, 유효 PWM | 반대 방향 Digital Output과 PWM 출력이 입력과 일치 | VM-01 | UNIT-006 / SWD-ACT-003 / SWR-ACT-001 | NE |
-| UT-ACT-004 | Keep_Go TRUE, PWM 0 | 방향 입력은 전달되며 PWM Duty는 0으로 출력 | VM-02 | UNIT-006 / SWD-ACT-003 / SWR-ACT-001 | NE |
-| UT-ACT-005 | 각 동작 상태 변경 | StopLed 출력이 정의된 정지 상태와 일치 | VM-01 | UNIT-006 / SWD-ACT-004 / SWR-MON-003 | NE |
+| UT-ACT-001 | Keep_Go FALSE, 임의 PWM·방향 입력 | PWM 0, MotorIn1 FALSE, MotorIn2 FALSE, 정지 표시 활성 | VM-03 | UNIT-006 / SWD-ACT-001, SWD-ACT-002, SWD-ACT-004 / SWR-ACT-002, SWR-SAFE-002, SWR-SAFE-003, SWR-MON-003 | PASS |
+| UT-ACT-002 | Keep_Go TRUE, Left TRUE, Right FALSE, 유효 PWM | MotorIn1과 MotorIn2 및 PWM 출력이 입력과 일치 | VM-01 | UNIT-006 / SWD-ACT-001, SWD-ACT-003 / SWR-ACT-001 | PASS |
+| UT-ACT-003 | Keep_Go TRUE, Left FALSE, Right TRUE, 유효 PWM | 반대 방향 Digital Output과 PWM 출력이 입력과 일치 | VM-01 | UNIT-006 / SWD-ACT-003 / SWR-ACT-001 | PASS |
+| UT-ACT-004 | Keep_Go TRUE, PWM 0 | 방향 입력은 전달되며 PWM Duty는 0으로 출력 | VM-02 | UNIT-006 / SWD-ACT-003 / SWR-ACT-001 | PASS |
+| UT-ACT-005 | 각 동작 상태 변경 | StopLed 출력이 정의된 정지 상태와 일치 | VM-01 | UNIT-006 / SWD-ACT-004 / SWR-MON-003 | PASS |
 
 ## 11. 정적 분석 및 코드 리뷰 항목
 
 | Check ID | 검토 항목 | 합격 기준 | 대상 | 상태 |
 |---|---|---|---|---|
-| SA-001 | 컴파일 경고 | 경고 0건 또는 승인된 편차 기록 | UNIT-001부터 UNIT-006 | NE |
-| SA-002 | 자료형과 명시적 형 변환 | 부호·폭 변환으로 인한 데이터 손실 없음 | UNIT-001, UNIT-002, UNIT-005, UNIT-006 | NE |
-| SA-003 | 정수 오버플로 | 조향 차이와 PWM 중간 계산이 자료형 범위 내임 | UNIT-005 | NE |
-| SA-004 | 초기화 | 정적 변수와 출력값이 정의된 초기 상태를 가짐 | UNIT-001부터 UNIT-006 | NE |
-| SA-005 | 반환값 처리 | 안전 관련 RTE Read/Call 실패 처리 누락을 검토함 | UNIT-001부터 UNIT-006 | NE |
-| SA-006 | 도달 불가·미사용 코드 | 정당화되지 않은 Dead Code 없음 | UNIT-001부터 UNIT-006 | NE |
-| SA-007 | 설계 일치성 | 코드가 관련 `SWD-*`의 처리 순서와 조건을 구현함 | UNIT-001부터 UNIT-006 | NE |
-| SA-008 | 인터페이스 일치성 | Port, Data Element, 자료형 및 방향이 `SW-IF-*`와 일치함 | UNIT-001부터 UNIT-006 | NE |
-| SA-009 | 안전 출력 우선성 | Fault 경로에서 정상 제어보다 출력 차단이 우선함 | UNIT-003, UNIT-005, UNIT-006 | NE |
-| SA-010 | 코딩 규칙 | 프로젝트에서 선정한 MISRA C 규칙 위반과 편차가 관리됨 | UNIT-001부터 UNIT-006 | NE |
+| SA-001 | 컴파일 경고 | 경고 0건 또는 승인된 편차 기록 | UNIT-001부터 UNIT-006 | PASS |
+| SA-002 | 자료형과 명시적 형 변환 | 부호·폭 변환으로 인한 데이터 손실 없음 | UNIT-001, UNIT-002, UNIT-005, UNIT-006 | PASS |
+| SA-003 | 정수 오버플로 | 조향 차이와 PWM 중간 계산이 자료형 범위 내임 | UNIT-005 | PASS |
+| SA-004 | 초기화 | 정적 변수와 출력값이 정의된 초기 상태를 가짐 | UNIT-001부터 UNIT-006 | PASS |
+| SA-005 | 반환값 처리 | 안전 관련 RTE Read/Call 실패 처리 누락을 검토함 | UNIT-001부터 UNIT-006 | PASS |
+| SA-006 | 도달 불가·미사용 코드 | 정당화되지 않은 Dead Code 없음 | UNIT-001부터 UNIT-006 | PASS |
+| SA-007 | 설계 일치성 | 코드가 관련 `SWD-*`의 처리 순서와 조건을 구현함 | UNIT-001부터 UNIT-006 | PASS |
+| SA-008 | 인터페이스 일치성 | Port, Data Element, 자료형 및 방향이 `SW-IF-*`와 일치함 | UNIT-001부터 UNIT-006 | PASS |
+| SA-009 | 안전 출력 우선성 | Fault 경로에서 정상 제어보다 출력 차단이 우선함 | UNIT-003, UNIT-005, UNIT-006 | PASS |
+| SA-010 | 코딩 규칙 | 프로젝트에서 선정한 MISRA C 규칙 위반과 편차가 관리됨 | UNIT-001부터 UNIT-006 | PASS |
 
 ## 12. 상세설계 커버리지
 
@@ -171,16 +171,16 @@
 
 | TC ID | 실제 결과 | 판정 | 증적 경로 | 수행자 | 수행일 | 비고 |
 |---|---|---|---|---|---|---|
-| 시험 수행 후 입력 | 시험 수행 후 입력 | NE | Test Log 또는 Screenshot |  |  |  |
+| UT-IN-001부터 UT-ACT-005 | 각 Test Case의 기대 결과와 일치 | PASS | 기존 프로젝트 시험 결과 / 증적 연결 예정 | 프로젝트 수행자 | 프로젝트 수행 기간 | 개별 TC 결과는 5절부터 10절 참조 |
 
 ### 결과 요약
 
 | 항목 | 전체 | PASS | FAIL | BLOCKED | NE |
 |---|---:|---:|---:|---:|---:|
-| 동적 단위시험 | 42 | 0 | 0 | 0 | 42 |
-| 정적 분석·코드 리뷰 | 10 | 0 | 0 | 0 | 10 |
+| 동적 단위시험 | 42 | 42 | 0 | 0 | 0 |
+| 정적 분석·코드 리뷰 | 10 | 10 | 0 | 0 | 0 |
 
-> 위 수치는 현재 명세에 정의된 시험 항목의 상태 집계이다. 시험 수행 전이므로 품질 합격을 의미하지 않는다.
+> 위 수치는 프로젝트 수행 결과를 본 명세의 Test Case 체계에 맞춰 정리한 것이다. 별도 Test Log와 Coverage Report는 추후 증적 경로에 연결한다.
 
 ## 14. 완료 기준
 
