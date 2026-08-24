@@ -28,7 +28,6 @@
 | SW-INTG-04 | UNIT-003 ↔ UNIT-005 | NORMAL/FAIL-SAFE 상태와 제어 입력 전달 |
 | SW-INTG-05 | UNIT-005 ↔ UNIT-006 | PWM·방향·동작 허가 전달 |
 | SW-INTG-06 | UNIT-006 ↔ IoHwAb Mock | 하드웨어 출력 API 호출값 검증 |
-| SW-INTG-07 | UNIT-001부터 UNIT-006 | 호스트 기반 End-to-End SW 데이터 흐름 |
 
 ### 제외 범위
 
@@ -111,70 +110,54 @@ flowchart LR
 | ITC-FLOW-004 | RUN-004 → RUN-005 | ControlCalc 결과가 PwmActuator 입력으로 사용됨 | SWR-CTRL-001, SWR-CTRL-002, SWR-ACT-001 / UNIT-005, UNIT-006 | PASS |
 | ITC-FLOW-005 | RUN-002 → RUN-003 → RUN-004 → RUN-005 | Fault가 동일 시험 Cycle 내에서 최종 출력 차단까지 전파됨 | SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003 / UNIT-002, UNIT-003, UNIT-005, UNIT-006 | PASS |
 
-## 7. 호스트 기반 End-to-End SW 시험
+## 7. SW 요구사항 추적성
 
-| ITC ID | 시나리오 | 주입 조건 | 기대 결과 | 추적 ID | 결과 |
-|---|---|---|---|---|---|
-| ITC-E2E-SW-001 | 정상 우측 조향 | Analog 증가, Counter 갱신, WdgM OK | NORMAL, Right TRUE, PWM 출력 Mock 호출 | SWR-IN-001, SWR-COM-001, SWR-COM-002, SWR-CTRL-001, SWR-ACT-001 | PASS |
-| ITC-E2E-SW-002 | 정상 좌측 조향 | Analog 감소, Counter 갱신, WdgM OK | NORMAL, Left TRUE, PWM 출력 Mock 호출 | SWR-IN-001, SWR-COM-001, SWR-COM-002, SWR-CTRL-001, SWR-ACT-001 | PASS |
-| ITC-E2E-SW-003 | 정지 입력 | 변화량이 정지 조건 이내 | 방향 FALSE, PWM 0, Keep_Go FALSE | SWR-CTRL-002, SWR-ACT-002 | PASS |
-| ITC-E2E-SW-004 | Timeout | COM Buffer의 Alive Counter 고정 | Timeout Fault, FAIL-SAFE, PWM·방향 Mock 출력 차단 | SWR-DIAG-001, SWR-DIAG-003, SWR-SAFE-001, SWR-SAFE-002, SWR-SAFE-003 | PASS |
-| ITC-E2E-SW-005 | Invalid | COM Buffer에 범위 밖 조향값 설정 | Invalid Fault, FAIL-SAFE, PWM·방향 Mock 출력 차단 | SWR-DIAG-002, SWR-DIAG-003, SWR-SAFE-001, SWR-SAFE-002 | PASS |
-| ITC-E2E-SW-006 | 내부 실행 Fault | WdgM Stub을 FAILED, EXPIRED 또는 STOPPED로 설정 | WdgM Fault, FAIL-SAFE, PWM·방향 Mock 출력 차단 | SWR-WDG-001, SWR-WDG-002, SWR-SAFE-001, SWR-SAFE-002 | PASS |
-| ITC-E2E-SW-007 | Fault 지속 | Fault 입력을 여러 시험 Cycle 동안 유지 | FAIL-SAFE와 안전 출력 지속 | SWR-SAFE-003 | PASS |
-| ITC-E2E-SW-008 | 정상 복귀 | Fault 해제 후 정상 Cycle을 복귀 기준만큼 호출 | 기준 전 FAIL-SAFE 유지, 기준 충족 후 NORMAL 복귀 | SWR-SAFE-004 | PASS |
-| ITC-E2E-SW-009 | 복귀 중 Fault 재발 | 정상 Cycle 2회 후 Fault 재주입 | 복귀 Counter 초기화, FAIL-SAFE 유지 | SWR-SAFE-005 | PASS |
-| ITC-E2E-SW-010 | 모니터링 | 정상·Timeout·Invalid·WdgM Fault 순차 주입 | Monitoring Mock에 상태·Fault·출력 결과 저장 | SWR-MON-001, SWR-MON-002, SWR-MON-003 | PASS |
-
-## 8. SW 요구사항 추적성
-
-| SW 요구사항 | 주요 통합 Test Case |
+| SW 요구사항 | SWE.5 통합 Test Case 또는 후속 검증 |
 |---|---|
-| SWR-IN-001 | ITC-SW-001, ITC-E2E-SW-001, ITC-E2E-SW-002 |
+| SWR-IN-001 | ITC-SW-001 |
 | SWR-COM-001 | ITC-SW-002, ITC-SW-003, ITC-FLOW-001 |
-| SWR-COM-002 | ITC-SW-002, ITC-FLOW-001, ITC-E2E-SW-001 |
-| SWR-DIAG-001 | ITC-SW-003, ITC-SW-005, ITC-E2E-SW-004 |
-| SWR-DIAG-002 | ITC-SW-004, ITC-SW-006, ITC-E2E-SW-005 |
+| SWR-COM-002 | ITC-SW-002, ITC-FLOW-001 |
+| SWR-DIAG-001 | ITC-SW-003, ITC-SW-005 |
+| SWR-DIAG-002 | ITC-SW-004, ITC-SW-006 |
 | SWR-DIAG-003 | ITC-SW-004, ITC-SW-005, ITC-SW-006, ITC-FLOW-002 |
-| SWR-WDG-001 | ITC-SW-007, ITC-SW-008, ITC-E2E-SW-006 |
-| SWR-WDG-002 | ITC-SW-007, ITC-SW-008, ITC-SW-009, ITC-E2E-SW-006 |
+| SWR-WDG-001 | ITC-SW-007, ITC-SW-008 |
+| SWR-WDG-002 | ITC-SW-007, ITC-SW-008, ITC-SW-009 |
 | SWR-SAFE-001 | ITC-SW-010, ITC-SW-011, ITC-FLOW-003, ITC-FLOW-005 |
-| SWR-SAFE-002 | ITC-SW-011, ITC-SW-015, ITC-FLOW-005, ITC-E2E-SW-004 |
-| SWR-SAFE-003 | ITC-SW-011, ITC-SW-015, ITC-FLOW-005, ITC-E2E-SW-007 |
-| SWR-SAFE-004 | ITC-E2E-SW-008 |
-| SWR-SAFE-005 | ITC-E2E-SW-009 |
+| SWR-SAFE-002 | ITC-SW-011, ITC-SW-015, ITC-FLOW-005 |
+| SWR-SAFE-003 | ITC-SW-011, ITC-SW-015, ITC-FLOW-005 |
+| SWR-SAFE-004 | 전체 SW 상태 복귀 검증이므로 SWE.6에서 검증 |
+| SWR-SAFE-005 | 전체 SW 상태 복귀 중 Fault 재발 검증이므로 SWE.6에서 검증 |
 | SWR-CTRL-001 | ITC-SW-010, ITC-SW-012, ITC-FLOW-003, ITC-FLOW-004 |
-| SWR-CTRL-002 | ITC-SW-013, ITC-FLOW-004, ITC-E2E-SW-003 |
+| SWR-CTRL-002 | ITC-SW-013, ITC-FLOW-004 |
 | SWR-ACT-001 | ITC-SW-012, ITC-SW-014, ITC-FLOW-004 |
-| SWR-ACT-002 | ITC-SW-013, ITC-SW-015, ITC-E2E-SW-003 |
-| SWR-MON-001 | ITC-SW-016, ITC-E2E-SW-010 |
-| SWR-MON-002 | ITC-SW-009, ITC-SW-016, ITC-E2E-SW-010 |
-| SWR-MON-003 | ITC-SW-016, ITC-E2E-SW-010 |
+| SWR-ACT-002 | ITC-SW-013, ITC-SW-015 |
+| SWR-MON-001 | ITC-SW-016 |
+| SWR-MON-002 | ITC-SW-009, ITC-SW-016 |
+| SWR-MON-003 | ITC-SW-016 |
 
-## 9. 시험 결과 요약
+## 8. 시험 결과 요약
 
 | 시험 그룹 | 전체 | PASS | FAIL | BLOCKED |
 |---|---:|---:|---:|---:|
 | SWC Interface 통합시험 | 16 | 16 | 0 | 0 |
 | Runnable 연쇄 실행시험 | 5 | 5 | 0 | 0 |
-| 호스트 기반 End-to-End SW 시험 | 10 | 10 | 0 | 0 |
-| 합계 | 31 | 31 | 0 | 0 |
+| 합계 | 21 | 21 | 0 | 0 |
 
 ### 수행 결과
 
 - 실제 C Unit 사이의 RTE 공유 Buffer 연결이 정의된 Port 방향과 일치하였다.
 - Timeout, Invalid 및 WdgM Fault가 SafetyPolicy부터 출력 차단 Mock까지 전파되었다.
-- 정상·정지·FAIL-SAFE·정상 복귀 조건에서 SWC 중간값과 최종 Mock 호출값이 기대 결과와 일치하였다.
+- 정상·정지·FAIL-SAFE 조건에서 인접 SWC의 중간값과 Mock 호출값이 기대 결과와 일치하였다.
 - 실제 ECU, CAN 장비 및 PWM 하드웨어 없이 반복 가능한 SW 통합시험으로 구성하였다.
 
 > Test Driver 소스, Stub/Mock 코드 및 실행 로그는 해당 Test Case ID와 함께 시험 증적으로 관리한다.
 
-## 10. 완료 기준과 후속 단계
+## 9. 완료 기준과 후속 단계
 
-- 모든 `SWR-*`, `SW-IF-*`, `RUN-*`가 하나 이상의 통합 Test Case에 연결되어야 한다.
+- SWE.5 적용 대상인 모든 `SW-IF-*`, `RUN-*`가 하나 이상의 통합 Test Case에 연결되어야 한다.
 - 모든 Test Case가 PASS이거나 승인된 편차와 연결되어야 한다.
 - Interface 또는 Runnable 구조 변경 시 영향받는 Test Case를 재수행해야 한다.
-- SWE.6에서는 실제 ECU SW Build를 대상으로 SW 요구사항 충족 여부를 검증한다.
+- SWE.6에서는 통합된 ECU SW Build를 대상으로 전체 SW 요구사항과 상태 복귀 동작을 검증한다.
 - 시스템시험에서는 실제 CAN, 보드, PWM Pin, LED 및 모터를 포함한 전체 경로를 검증한다.
 
 ---
