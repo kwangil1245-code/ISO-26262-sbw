@@ -1,86 +1,165 @@
-# 시스템 테스트 (System Test)
+# 소프트웨어 요구사항 검증 명세서·결과서
 
-**Document ID**: PROJ-07-ST
-**ISO 26262 Reference**: Part 4, Cl.10 (System Integration and System Qualification Test)
-**ASPICE Reference**: SYS.5 (System Qualification Test)
-**Version**: 5.23
-**Date**: 2026-03-17
-**Status**: Draft
-**Project Title**: 주행 상황 실시간 경고 시스템
-**Subtitle**: 구간 정보 및 긴급차량 접근 기반 앰비언트·클러스터 경보
-
-| V-Model 위치 | 현재 문서 | 상위 연결 | 하위 연결 |
-|---|---|---|---|
-| 우측 상단 (SYS.5) | `07_System_Test.md` | `06_Integration_Test.md`, `01_Requirements.md` | 릴리즈/검수 |
+**Document ID**: STEER-07-SWQT  
+**ISO 26262 Reference**: Part 6, Cl.11  
+**ASPICE Reference**: SWE.6 (Software Qualification Test)  
+**Version**: 1.0  
+**Date**: 2026-08-24  
+**Status**: Completed  
+**Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템
 
 ---
 
-## 시스템 테스트 시나리오 (공식 표준 양식)
+## 1. 문서 목적
 
-## 은퇴된 umbrella row
+본 문서는 통합된 ECU 소프트웨어가 `03_SW_Requirements.md`의 `SWR-*`를 충족하는지 블랙박스 관점에서 검증한 결과를 기록한다.
 
-| Scene. ID | 설명 | 은퇴 사유 |
+CANoe/CAPL은 ECU 소프트웨어 외부의 조향 CAN 메시지와 Fault 조건을 생성하고 상태·출력 신호를 관측하는 시험 도구로 사용한다. 시험 대상은 통합된 소프트웨어이며, 실제 모터 토크·PWM 파형·배선·CAN Transceiver와 같은 물리 시스템 특성은 후속 시스템검증 범위로 분리한다.
+
+## 2. SWE.5와 SWE.6의 구분
+
+| 구분 | SWE.5 통합시험 | SWE.6 소프트웨어 요구사항 검증 |
 |---|---|---|
-| RET_ST_018 | 경찰 또는 구급 긴급 이벤트 발생 시 Ethernet 경로의 외부 송신 메시지가 정의된 `100ms` 주기로 연속 관찰되는지 확인한다. | 경찰/구급 exact executable row로 분해되어 active 표면에서 제외 |
-| RET_ST_029 | 방향지시등, 주행모드, 안전벨트, 접근거리 표시가 함께 반영될 때 경고 안내가 사용자 기대대로 보정되는지 확인한다. (Pre-Activation) | exact executable row로 분해되어 active 표면에서 제외 |
-| RET_ST_032 | 입력 지연과 상태 전이가 발생해도 경고 안내가 안정적으로 유지되는지 확인한다. (Pre-Activation) | exact executable row로 분해되어 active 표면에서 제외 |
-| RET_ST_033 | 채널 전환과 오디오 경합이 발생해도 경고 안내가 안정적으로 유지되는지 확인한다. (Pre-Activation) | exact executable row로 분해되어 active 표면에서 제외 |
+| 검증 기준 | SWC, Interface, Runnable 구조 | `SWR-*` 요구사항 |
+| 관점 | 구성요소 사이의 연결 | 통합 SW의 외부 동작 |
+| 입력 | Stub/Mock 및 직접 Runnable 호출 | CANoe/CAPL, Test Hook 및 ECU Interface |
+| 내부 관측 | RTE Buffer와 Mock 호출 | CAN 신호, SW 상태, Fault 및 출력 명령 |
+| 주요 질문 | SWC가 올바르게 연결됐는가 | 통합 SW가 요구 동작을 수행하는가 |
 
-## 활성 executable row
+## 3. 시험 대상과 환경
 
-> Closeout 실행 기준:
-> - 각 ST ID는 동일 ID의 system testcase 및 scenario log와 1:1로 연계한다.
-> - 이번 closeout 판정은 smoke 기준으로 운영하며, 대표 장면 진입, 핵심 경고/표시/출력 유지, testcase 종료 verdict를 PASS 근거로 본다.
-> - 표의 설명은 closeout 기준의 핵심 시나리오 확인 문장으로 해석하고, 세부 수치와 타이밍은 실행 로그 기준으로 완화 적용한다.
-> - `Pass / Fail` 열의 최종 `PASS/FAIL` 기입은 실제 CANoe 실행 로그 확보 후 동일 ID 행에 반영한다.
+| 항목 | 구성 |
+|---|---|
+| 시험 대상 | 입력 ECU 및 출력 ECU의 통합 Software Build |
+| 외부 자극 | CANoe/CAPL 기반 조향 메시지 및 Alive Counter 생성 |
+| 내부 Fault 주입 | CodeWarrior 또는 시험용 Hook을 통한 WdgM 상태 설정 |
+| 입력 ECU 확인 | 조향 입력 Test Hook 또는 제어 입력과 CAN Trace 비교 |
+| 관측 정보 | 조향값, Alive Counter, Fault Flag, NORMAL/FAIL-SAFE 상태, PWM 명령, 방향 명령 |
+| 물리 출력 제외 | 실제 PWM 파형, Pin 전압, LED, 모터 회전 및 토크 |
+| 판정 | 실제 SW 출력이 기대 결과와 일치하면 PASS |
 
-| Scene. ID | 설명 | Pass / Fail | 담당자 | 일자 |
+```mermaid
+flowchart LR
+    C["CANoe·CAPL/Test Hook"] --> E["통합 ECU Software"]
+    E --> O["CAN·상태·출력 명령 관측"]
+    O --> V["SWR 기준 판정"]
+```
+
+## 4. CAPL 시험 자극 원칙
+
+| 자극 유형 | CAPL 동작 | 검증 목적 |
+|---|---|---|
+| 정상 메시지 | 유효 조향값과 증가하는 Alive Counter 송신 | 정상 수신·진단·제어 확인 |
+| Counter 고정 | 동일 Alive Counter를 반복 송신 | 갱신 이상과 Timeout Fault 확인 |
+| Invalid 값 | 정상 범위를 벗어난 조향값 송신 | 입력 유효성 Fault 확인 |
+| 정상 복귀 | Fault 해제 후 정상 메시지 연속 송신 | FAIL-SAFE 유지와 NORMAL 복귀 확인 |
+| Fault 재발 | 복귀 확인 중 비정상 메시지 재송신 | 복귀 중단 확인 |
+
+> 현재 구현의 통신 갱신 진단은 Data Received Event에서 Alive Counter를 비교한다. 따라서 본 시험에서는 메시지를 완전히 중단하는 방식이 아니라 동일 Counter를 반복 송신하여 갱신 이상 경로를 실행한다.
+
+## 5. SW Qualification Test Case
+
+### 5.1 입력 및 통신
+
+| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
 |---|---|---|---|---|
-| ST_001 | 전원 ON 후 기본 표시와 경고 상태가 초기화되고 불필요한 경고 없이 주행 준비 상태로 진입하는지 확인한다. | Ready |  |  |
-| ST_002 | 일반 구간 정상 주행 중에는 경고가 발생하지 않고 기본 표시가 안정적으로 유지되는지 확인한다. | Ready |  |  |
-| ST_003 | 일반 구간에서 단일 위험 입력이 발생하면 기본 경고가 활성되는지 확인한다. | Ready |  |  |
-| ST_004 | 일반 구간에서 기본 경고 조건이 해제되면 경고가 정상 해제되는지 확인한다. | Ready |  |  |
-| ST_005 | 일반 구간 주행 중 스쿨존 진입 후 과속 조건이 유효하면 스쿨존 경고 정책으로 즉시 전환되는지 확인한다. | Ready |  |  |
-| ST_006 | 스쿨존 과속 경고 상태에서 일반 구간으로 복귀하면 기본 상태로 정상 복귀되는지 확인한다. | Ready |  |  |
-| ST_007 | 일반 구간에서 고속 구간으로 전환되면 고속 구간 경고 판단 정책이 즉시 반영되는지 확인한다. | Ready |  |  |
-| ST_008 | 고속 구간 주행 중 무조향 조건이 지속되면 경고가 발생하고 조향 입력 복귀 후 해제되는지 확인한다. | Ready |  |  |
-| ST_009 | 유도 구간에서 좌회전 안내가 들어오면 좌측 방향 정보와 경고 안내가 일관되게 표시되는지 확인한다. | Ready |  |  |
-| ST_010 | 유도 구간에서 우회전 안내가 들어오면 우측 방향 정보와 경고 안내가 표시되고 종료 후 기본 상태로 복귀되는지 확인한다. | Ready |  |  |
-| ST_011 | 경찰 긴급 접근이 일반 구간 경고와 동시에 발생할 때 경찰 경고가 우선 표시되는지 확인한다. | Ready |  |  |
-| ST_012 | 구급 긴급 접근이 일반 구간 경고와 동시에 발생할 때 구급 경고가 우선 표시되는지 확인한다. | Ready |  |  |
-| ST_013 | 경찰 긴급 접근 방향(앞/좌/우/후)에 따라 클러스터와 전면 표시의 방향 정보가 정확히 일치하는지 확인한다. | Ready |  |  |
-| ST_014 | 구급 긴급 접근 방향(앞/좌/우/후)에 따라 클러스터와 전면 표시의 방향 정보가 정확히 일치하는지 확인한다. | Ready |  |  |
-| ST_015 | 동일 접근 조건에서 경찰차와 구급차 긴급 알림이 동시에 수신될 때 구급 경고가 우선 선택되는지 확인한다. | Ready |  |  |
-| ST_016 | 동일 등급의 경찰 긴급 알림이 복수 수신될 때 ETA가 더 짧은 경고가 우선 선택되고 동일 ETA에서는 SourceID 규칙이 적용되는지 확인한다. | Ready |  |  |
-| ST_017 | 동일 등급의 구급 긴급 알림이 복수 수신될 때 ETA가 더 짧은 경고가 우선 선택되고 동일 ETA에서는 SourceID 규칙이 적용되는지 확인한다. | Ready |  |  |
-| ST_018 | 경찰 긴급 이벤트 발생 시 Ethernet 경로의 외부 송신 메시지가 정의된 `100ms` 주기로 연속 관찰되는지 확인한다. | Ready |  |  |
-| ST_019 | 구급 긴급 이벤트 발생 시 Ethernet 경로의 외부 송신 메시지가 정의된 `100ms` 주기로 연속 관찰되는지 확인한다. | Ready |  |  |
-| ST_020 | 긴급 알림이 `1000ms` 동안 갱신되지 않을 때 경고가 안전하게 해제되고 기본 상태로 복귀되는지 확인한다. | Ready |  |  |
-| ST_021 | 긴급 경고 종료 후 구간 경고가 여전히 유효하면 이전 구간 경고 맥락이 안전하게 복원되는지 확인한다. | Ready |  |  |
-| ST_022 | 교차로에서 긴급차량 접근과 TTC 충돌 위험이 함께 높아질 때 자동 감속 보조 요청과 경고 출력이 함께 활성되는지 확인한다. (SIL Scenario 213) | Ready |  |  |
-| ST_023 | 합류 구간에서 긴급차량 접근과 TTC 충돌 위험이 함께 높아질 때 자동 감속 보조 요청과 경고 출력이 함께 활성되는지 확인한다. (SIL Scenario 238) | Ready |  |  |
-| ST_024 | 자동 감속 보조 활성 상태에서 운전자 개입 시 감속 보조 요청과 경고 상태가 함께 해제되는지 확인한다. (SIL Scenario 15/16/17/19) | Ready |  |  |
-| ST_025 | 경고 전달 이상이 발생하면 자동 감속 보조가 차단되고 최소 경고 채널이 유지되며 fail-safe로 전환되는지 확인한다. (SIL Scenario 18) | Ready |  |  |
-| ST_026 | 경고 전달 이상 해제 후 시스템이 정상 경로로 복귀하는지 확인한다. (SIL Scenario 18) | Ready |  |  |
-| ST_027 | 전방 객체 급접근이 발생할 때 위험 경고와 이벤트 기록이 일관되게 동작하는지 확인한다. | Ready |  |  |
-| ST_028 | 교차로 측방 접근이 발생할 때 위험 경고와 이벤트 기록이 일관되게 동작하는지 확인한다. | Ready |  |  |
-| ST_029 | 합류 또는 끼어들기 위험이 발생할 때 위험 경고와 이벤트 기록이 일관되게 동작하는지 확인한다. | Ready |  |  |
-| ST_030 | 안전벨트 및 운전자 상태 변화가 발생할 때 시스템 경고 안내가 맥락에 맞게 보정되는지 확인한다. | Ready |  |  |
-| ST_031 | 긴급 접근거리 표시가 경고 안내와 함께 사용자 화면에 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_032 | 표시 설정과 음량 설정 변경이 경고 안내 정책에 즉시 반영되는지 확인한다. | Ready |  |  |
-| ST_033 | 경고 발생 후 이력 조회를 수행할 때 최근 경고 순서와 원인 정보가 사용자 화면에 일관되게 제공되는지 확인한다. | Ready |  |  |
-| ST_034 | 짧은 시간 내 동일 경고가 재진입해도 중복 팝업 억제와 경고 안내 안정성이 유지되는지 확인한다. | Ready |  |  |
-| ST_035 | 긴급 경고 timeout clear 이후 이전 유효 경고가 불필요한 진동 없이 안정적으로 복원되는지 확인한다. | Ready |  |  |
-| ST_036 | fail-safe 해제 후 경고 경로가 정상 상태로 안정적으로 복귀하는지 확인한다. | Ready |  |  |
-| ST_037 | 경고 오디오가 활성화된 상태에서 오디오 집중 채널과 감쇄 정책이 안정적으로 유지되는지 확인한다. | Ready |  |  |
-| ST_038 | 시각 우선 경고 모드에서 팝업 우선순위와 클러스터 동기가 안정적으로 유지되는지 확인한다. | Ready |  |  |
-| ST_039 | 제동 및 차체 안정화 상태 변화가 시스템 시나리오에서 경고 맥락에 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_040 | 출입, 탑승자 보호, 실내 편의 상태 변화가 시스템 시나리오에서 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_041 | 표시 및 안내 서비스 상태 변화가 시스템 시나리오에서 경고 표시와 안내 정책에 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_042 | 주행 보조, 주차 보조, 주변 인지 상태가 시스템 시나리오에서 위험 판단과 기능 가용성에 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_043 | 차량 서비스, 보안, 진단 상태 변화가 시스템 시나리오에서 경고 정보 전달 가용성, fail-safe 정책, 외부 진단기 확인 결과에 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_044 | 충전, 전력 변환, 구동 상태 변화가 시스템 시나리오에서 구동 준비와 서비스 경고 맥락에 일관되게 반영되는지 확인한다. | Ready |  |  |
-| ST_045 | 전원 ON 후 일반 구간 주행, 긴급 경고 개입, 경고 복귀, 정지, 전원 OFF까지 연속 주행 시나리오에서 시스템이 일관되게 동작하는지 확인한다. | Ready |  |  |
-| ST_046 | 전원 ON 후 정상 주행 중 경고 전달 이상이 발생하고 fail-safe 진입 후 복귀, 정지, 전원 OFF까지 연속 시나리오에서 시스템이 일관되게 동작하는지 확인한다. | Ready |  |  |
+| SVT-COM-001 | 입력 ECU에 최소·중간·최대 조향 입력을 순차 적용하고 CAN Trace 확인 | 대응하는 조향 정보가 생성되어 제공됨 | SWR-IN-001 | PASS |
+| SVT-COM-002 | 정상 조향값과 Alive Counter를 사용하여 조향 메시지 주기 송신 | 출력 ECU가 조향 정보와 갱신 정보를 정상 수신함 | SWR-COM-001, SWR-COM-002 | PASS |
+| SVT-COM-003 | CAPL에서 Alive Counter를 메시지마다 증가시켜 연속 송신 | 통신 Fault가 설정되지 않고 조향 정보가 제어에 사용됨 | SWR-COM-001, SWR-DIAG-001 | PASS |
+
+### 5.2 통신·입력·실행 진단
+
+| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
+|---|---|---|---|---|
+| SVT-DIAG-001 | CAPL에서 동일 Alive Counter를 진단 기준까지 반복 송신 | 갱신 이상이 감지되고 통신 Fault가 설정됨 | SWR-DIAG-001, SWR-DIAG-003 | PASS |
+| SVT-DIAG-002 | 정상 범위의 하한·상한 조향값 송신 | Invalid Fault가 설정되지 않음 | SWR-DIAG-002 | PASS |
+| SVT-DIAG-003 | 정상 범위 미만과 초과 조향값 송신 | Invalid Fault가 설정되고 안전 판단에 전달됨 | SWR-DIAG-002, SWR-DIAG-003 | PASS |
+| SVT-WDG-001 | 시험용 Hook으로 WdgM 상태를 OK로 설정 | 내부 실행 Fault가 설정되지 않음 | SWR-WDG-001, SWR-WDG-002 | PASS |
+| SVT-WDG-002 | 시험용 Hook으로 WdgM 상태를 FAILED, EXPIRED, STOPPED로 각각 설정 | 각 조건에서 내부 실행 Fault가 설정되고 안전 판단에 반영됨 | SWR-WDG-001, SWR-WDG-002 | PASS |
+
+### 5.3 안전 상태 전환·유지·복귀
+
+| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
+|---|---|---|---|---|
+| SVT-SAFE-001 | Timeout, Invalid 및 WdgM Fault를 각각 발생 | 각 Fault에서 NORMAL에서 FAIL-SAFE로 전환 | SWR-SAFE-001 | PASS |
+| SVT-SAFE-002 | FAIL-SAFE 상태에서 조향 입력을 변화 | 조향값이 안전값으로 제한되고 출력 명령이 비활성화됨 | SWR-SAFE-002 | PASS |
+| SVT-SAFE-003 | Fault 조건을 여러 처리 Cycle 동안 유지 | FAIL-SAFE와 안전 출력이 계속 유지됨 | SWR-SAFE-003 | PASS |
+| SVT-SAFE-004 | Fault 해제 후 정상 메시지를 복귀 기준만큼 연속 송신 | 기준 충족 전 FAIL-SAFE 유지, 기준 충족 후 NORMAL 복귀 | SWR-SAFE-004 | PASS |
+| SVT-SAFE-005 | 정상 복귀 확인 중 동일 Counter 또는 Invalid 값을 재주입 | 정상 복귀가 중단되고 FAIL-SAFE가 유지됨 | SWR-SAFE-005 | PASS |
+
+### 5.4 제어·출력·모니터링
+
+| SVT ID | 시험 조건·절차 | 기대 결과 | 추적 SW 요구사항 | 결과 |
+|---|---|---|---|---|
+| SVT-CTRL-001 | NORMAL 상태에서 조향값을 증가·감소 | 조향 변화에 따라 좌·우 방향과 출력 크기가 계산됨 | SWR-CTRL-001 | PASS |
+| SVT-CTRL-002 | 조향 변화량을 정지 조건 이내로 입력 | 정지 상태와 출력 비활성 명령 생성 | SWR-CTRL-002 | PASS |
+| SVT-ACT-001 | 정상 방향·PWM 계산 결과 생성 | 계산 결과가 Actuator Interface의 방향·PWM 명령으로 제공됨 | SWR-ACT-001 | PASS |
+| SVT-ACT-002 | FAIL-SAFE 또는 정지 상태 생성 | PWM과 방향 출력 명령이 비활성화됨 | SWR-ACT-002 | PASS |
+| SVT-MON-001 | NORMAL, Timeout, Invalid, WdgM Fault 및 복귀 조건을 순차 실행 | 시스템 상태·Fault 종류·출력 결과가 구분되어 관측됨 | SWR-MON-001, SWR-MON-002, SWR-MON-003 | PASS |
+
+## 6. SW 요구사항 추적성
+
+| SW 요구사항 | 검증 Test Case |
+|---|---|
+| SWR-IN-001 | SVT-COM-001 |
+| SWR-COM-001 | SVT-COM-002, SVT-COM-003 |
+| SWR-COM-002 | SVT-COM-002 |
+| SWR-DIAG-001 | SVT-COM-003, SVT-DIAG-001 |
+| SWR-DIAG-002 | SVT-DIAG-002, SVT-DIAG-003 |
+| SWR-DIAG-003 | SVT-DIAG-001, SVT-DIAG-003 |
+| SWR-WDG-001 | SVT-WDG-001, SVT-WDG-002 |
+| SWR-WDG-002 | SVT-WDG-001, SVT-WDG-002 |
+| SWR-SAFE-001 | SVT-SAFE-001 |
+| SWR-SAFE-002 | SVT-SAFE-002 |
+| SWR-SAFE-003 | SVT-SAFE-003 |
+| SWR-SAFE-004 | SVT-SAFE-004 |
+| SWR-SAFE-005 | SVT-SAFE-005 |
+| SWR-CTRL-001 | SVT-CTRL-001 |
+| SWR-CTRL-002 | SVT-CTRL-002 |
+| SWR-ACT-001 | SVT-ACT-001 |
+| SWR-ACT-002 | SVT-ACT-002 |
+| SWR-MON-001 | SVT-MON-001 |
+| SWR-MON-002 | SVT-MON-001 |
+| SWR-MON-003 | SVT-MON-001 |
+
+## 7. 시험 결과 요약
+
+| 시험 그룹 | 전체 | PASS | FAIL | BLOCKED |
+|---|---:|---:|---:|---:|
+| 입력·통신 | 3 | 3 | 0 | 0 |
+| 통신·입력·실행 진단 | 5 | 5 | 0 | 0 |
+| 안전 상태 전환·유지·복귀 | 5 | 5 | 0 | 0 |
+| 제어·출력·모니터링 | 5 | 5 | 0 | 0 |
+| 합계 | 18 | 18 | 0 | 0 |
+
+### 수행 결과
+
+- 정상 조향 메시지의 수신·진단·제어 경로가 정상 동작하였다.
+- 동일 Alive Counter와 범위 밖 조향값을 통해 Timeout 및 Invalid Fault를 확인하였다.
+- WdgM 상태 주입 시 내부 실행 Fault와 FAIL-SAFE 전환을 확인하였다.
+- FAIL-SAFE 상태에서 출력 명령이 제한되고 정상 조건 충족 시 NORMAL로 복귀하였다.
+- 20개 SW 요구사항이 하나 이상의 SWE.6 Test Case에 연결되었다.
+
+> CAPL Source, CANoe Configuration, CAN Trace, 상태값 캡처 및 시험용 Hook 설정은 각 `SVT-*` ID와 함께 시험 증적으로 관리한다.
+
+## 8. 시스템검증으로 이관되는 항목
+
+| 검증 항목 | SWE.6 제외 이유 |
+|---|---|
+| 입력 ECU와 출력 ECU의 실제 물리 CAN 연결 | Network HW와 Transceiver를 포함함 |
+| 실제 10 ms 송신 주기 정밀 측정 | ECU OS와 실제 Network Timing을 포함함 |
+| PWM Pin Duty와 주파수 측정 | MCAL·IoHwAb·Pin·계측기를 포함함 |
+| 방향 Pin 및 LED 전압 확인 | 실제 HW 출력 경로를 포함함 |
+| 모터 좌·우 회전과 정지 | Actuator와 전원·배선을 포함함 |
+
+## 9. 완료 기준
+
+- 모든 `SWR-*`가 하나 이상의 `SVT-*`에 연결되어야 한다.
+- 모든 Test Case가 PASS이거나 승인된 편차와 연결되어야 한다.
+- Software Build, CAPL 및 CANoe 설정 버전이 시험 결과와 연결되어야 한다.
+- SW 요구사항 변경 시 영향받는 Test Case를 재수행해야 한다.
+- 시스템검증 입력으로 통합 Software Build와 미검증 HW 항목을 전달해야 한다.
 
 ---
+
+본 문서는 CANoe/CAPL을 사용한 SWE.6 소프트웨어 요구사항 검증의 기준 산출물이다. 실제 ECU 간 통신과 물리 출력은 후속 시스템검증에서 확인한다.
