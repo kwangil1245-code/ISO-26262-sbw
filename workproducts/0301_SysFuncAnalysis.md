@@ -1,88 +1,210 @@
-﻿# 시스템 기능 분석 (System Function Analysis)
+# 소프트웨어 아키텍처 설계 명세서 (Software Architecture Design Specification)
 
-**Document ID**: PROJ-0301-SFA
-**ISO 26262 Reference**: Part 4, Cl.7 (System Design)
-**ASPICE Reference**: SYS.3 (System Architectural Design)
-**Version**: 3.35
-**Date**: 2026-03-17
-**Status**: Draft (Architecture Reset In Progress)
-**Project Title**: 주행 상황 실시간 경고 시스템
-**Subtitle**: 구간 정보 및 긴급차량 접근 기반 앰비언트·클러스터 경보
+**Document ID**: STEER-0301-SWADS  
+**ISO 26262 Reference**: Part 6, Cl.7  
+**ASPICE Reference**: SWE.2  
+**Version**: 1.0  
+**Date**: 2026-08-24  
+**Status**: Draft  
+**Project Title**: AUTOSAR 기반 조향 관련 오류에 대한 복구 및 진단 시스템
 
-| V-Model 위치 | 현재 문서 | 상위 연결 | 하위 연결 |
+---
+
+## 1. 문서 목적
+
+본 문서는 `03_SW_Requirements.md`의 `SWR-*`를 소프트웨어 구성요소에 할당하고, 입력 ECU와 출력 ECU의 SWC 구조, 책임, 인터페이스 및 실행 관계를 정의한다.
+
+본 문서는 소프트웨어 아키텍처 수준을 다룬다. CAN 신호의 Byte 배치와 송신 파라미터는 `0303_Communication_Specification.md`, 상태값·Counter·임계값은 `0304_System_Variables.md`, RTE 호출 코드·내부 알고리즘·Task 설정·IoHwAb 핀 연결은 `04_SW_Design_Implementation.md`에서 구체화한다.
+
+## 2. 아키텍처 설계 원칙
+
+| 원칙 | 적용 내용 |
+|---|---|
+| 기능 분리 | 입력, 통신 진단, 안전 판단, 제어 계산 및 하드웨어 출력을 별도 SWC로 분리한다. |
+| 단방향 데이터 흐름 | 조향 입력부터 하드웨어 출력까지 책임 순서에 따라 데이터를 전달한다. |
+| 안전 우선 | 진단 결과와 내부 실행 상태를 제어 계산보다 먼저 안전 판단에 반영한다. |
+| 인터페이스 기반 결합 | SWC 간 데이터는 정의된 Port와 Interface를 통해 전달한다. |
+| ECU 책임 분리 | 입력 ECU는 입력 취득·송신, 출력 ECU는 진단·안전 판단·제어·출력을 담당한다. |
+| 추적 가능성 | 모든 SWC와 인터페이스는 관련 `SWR-*`를 참조한다. |
+
+## 3. ECU별 소프트웨어 구성
+
+```mermaid
+flowchart LR
+    subgraph IN["입력 ECU"]
+        SS["SWC_SteeringSensor"]
+    end
+    CAN["CAN Network"]
+    subgraph OUT["출력 ECU"]
+        CM["SWC_CanMonitor"] --> SP["SWC_SafetyPolicy"]
+        SP --> CC["SWC_ControlCalc"]
+        CC --> PA["SWC_Pwm_Actuator"]
+    end
+    SS --> CAN --> CM
+```
+
+| SW Component ID | SWC | ECU 할당 | 주요 책임 |
 |---|---|---|---|
-| 좌측 중단 (SYS.3) | `0301_SysFuncAnalysis.md` | `03_Function_definition.md` | `0302_NWflowDef.md` |
+| SWC-001 | SWC_SteeringSensor | 입력 ECU | 조향 입력 취득, 조향 정보 생성, 갱신 정보 생성 및 CAN 송신 |
+| SWC-002 | SWC_CanMonitor | 출력 ECU | 조향 정보 수신, 통신 갱신 상태 및 입력 유효성 진단 |
+| SWC-003 | SWC_SafetyPolicy | 출력 ECU | 입력 진단과 내부 실행 상태 통합, NORMAL/FAIL-SAFE 판단 및 복귀 관리 |
+| SWC-004 | SWC_ControlCalc | 출력 ECU | 안전 상태를 반영한 방향·출력 크기 계산 및 정지 결정 |
+| SWC-005 | SWC_Pwm_Actuator | 출력 ECU | PWM·방향·정지 상태를 IoHwAb를 통해 하드웨어에 반영 |
 
----
+## 4. SWC별 책임과 요구사항 할당
 
-## 노드별 기능 명세 (공식 표준 양식)
+### 4.1 SWC_SteeringSensor
 
-| 노드 | 기능 상세 | 비고 |
+| 항목 | 내용 |
+|---|---|
+| 입력 | 조향 입력 장치의 아날로그 값 |
+| 처리 | 입력 취득, 조향 정보 변환, 메시지 갱신 정보 생성 |
+| 출력 | 조향값, Alive Counter |
+| 실행 방식 | Timing Event 기반 주기 실행 |
+| 할당 SW 요구사항 | SWR-IN-001, SWR-COM-001 |
+
+### 4.2 SWC_CanMonitor
+
+| 항목 | 내용 |
+|---|---|
+| 입력 | CAN으로 수신된 조향값과 Alive Counter |
+| 처리 | 수신 성공 여부 확인, 갱신 상태 진단, 조향값 유효성 진단 |
+| 출력 | 진단된 조향값, 통신·입력 Fault 결과 |
+| 실행 방식 | 조향 정보 Data Received Event 기반 실행 |
+| 할당 SW 요구사항 | SWR-COM-002, SWR-DIAG-001~003 |
+
+### 4.3 SWC_SafetyPolicy
+
+| 항목 | 내용 |
+|---|---|
+| 입력 | 진단된 조향값, 통신·입력 Fault, WdgM 상태 |
+| 처리 | 내부 실행 상태 확인, Fault 통합, 안전 상태 전환·유지·복귀 판단 |
+| 출력 | 안전 상태가 반영된 조향값, 출력 허가 상태, 시스템/Fault 상태 |
+| 실행 방식 | CanMonitor 결과 수신 Event 기반 실행 및 WdgM 연동 |
+| 할당 SW 요구사항 | SWR-WDG-001~002, SWR-SAFE-001~005, SWR-MON-001~002 |
+
+### 4.4 SWC_ControlCalc
+
+| 항목 | 내용 |
+|---|---|
+| 입력 | 안전 상태가 반영된 조향값과 출력 허가 상태 |
+| 처리 | 조향 방향 결정, 출력 크기 계산, 정지 상태 결정 |
+| 출력 | PWM 값, 좌·우 방향, 동작 허가 상태 |
+| 실행 방식 | SafetyPolicy 결과 수신 Event 기반 실행 |
+| 할당 SW 요구사항 | SWR-CTRL-001~002, SWR-SAFE-002~003, SWR-MON-003 |
+
+### 4.5 SWC_Pwm_Actuator
+
+| 항목 | 내용 |
+|---|---|
+| 입력 | PWM 값, 좌·우 방향, 동작 허가 상태 |
+| 처리 | 출력 허가 상태 확인 및 하드웨어 출력 요청 |
+| 출력 | PWM 채널, 방향 출력, 정지 상태 표시 |
+| 실행 방식 | ControlCalc 결과 수신 Event 기반 실행 |
+| 할당 SW 요구사항 | SWR-ACT-001~002, SWR-SAFE-002~003, SWR-MON-003 |
+
+## 5. SWC 인터페이스 구조
+
+```mermaid
+flowchart TD
+    ADC["IoHwAb Analog"] --> SS["SWC_SteeringSensor"]
+    SS -->|"SteerAngle, AliveCounter"| CM["SWC_CanMonitor"]
+    CM -->|"SteerInfo, Fault"| SP["SWC_SafetyPolicy"]
+    WD["WdgM"] -->|"Execution Status"| SP
+    SP -->|"SafeSteer, OutputEnable"| CC["SWC_ControlCalc"]
+    CC -->|"PWM, Direction, Enable"| PA["SWC_Pwm_Actuator"]
+    PA --> HW["IoHwAb Output"]
+```
+
+| Interface ID | 제공자 | 사용자 | 전달 정보 | 인터페이스 유형 | 관련 SW 요구사항 |
+|---|---|---|---|---|---|
+| SW-IF-001 | IoHwAb Analog | SWC_SteeringSensor | 조향 입력값 | Client-Server | SWR-IN-001 |
+| SW-IF-002 | SWC_SteeringSensor | SWC_CanMonitor | 조향값, Alive Counter | Sender-Receiver / CAN Mapping | SWR-COM-001~002 |
+| SW-IF-003 | SWC_CanMonitor | SWC_SafetyPolicy | 진단 조향값, 통신·입력 Fault | Sender-Receiver | SWR-DIAG-001~003 |
+| SW-IF-004 | WdgM | SWC_SafetyPolicy | 내부 실행 상태 | Client-Server | SWR-WDG-001~002 |
+| SW-IF-005 | SWC_SafetyPolicy | SWC_ControlCalc | 안전 조향값, 출력 허가, 시스템 상태 | Sender-Receiver | SWR-SAFE-001~005, SWR-CTRL-001 |
+| SW-IF-006 | SWC_ControlCalc | SWC_Pwm_Actuator | PWM 값, 좌·우 방향, 동작 허가 | Sender-Receiver | SWR-CTRL-001~002, SWR-ACT-001~002 |
+| SW-IF-007 | SWC_Pwm_Actuator | IoHwAb Output | PWM·Digital 출력 요청 | Client-Server | SWR-ACT-001~002 |
+| SW-IF-008 | 출력 ECU SW | 진단·모니터링 환경 | 시스템 상태, Fault, 출력 결과 | Monitoring/CAN | SWR-MON-001~003 |
+
+## 6. Runnable 및 Event 구조
+
+| Runnable ID | SWC | 역할 | 기동 Event | 상세 실행 조건 관리 |
+|---|---|---|---|---|
+| RUN-001 | SWC_SteeringSensor | 조향 입력 취득 및 메시지 송신 | Timing Event | `0303`, `04` |
+| RUN-002 | SWC_CanMonitor | CAN 수신 정보 진단 | Data Received Event | `0303`, `0304`, `04` |
+| RUN-003 | SWC_SafetyPolicy | Fault 통합 및 안전 상태 판단 | Data Received Event | `0304`, `04` |
+| RUN-004 | SWC_ControlCalc | 방향 및 출력 크기 계산 | Data Received Event | `0304`, `04` |
+| RUN-005 | SWC_Pwm_Actuator | 하드웨어 출력 반영 | Data Received Event | `04` |
+
+> 입력 ECU의 실제 송신 주기는 `0303_Communication_Specification.md`에서 정의한다. 출력 ECU의 Runnable은 수신 데이터에 의해 연쇄 실행되는 구조이며, OS Task Mapping과 실행 순서는 `04_SW_Design_Implementation.md`에서 확정한다.
+
+## 7. 정상 동작 데이터 흐름
+
+```mermaid
+sequenceDiagram
+    participant S as SteeringSensor
+    participant M as CanMonitor
+    participant P as SafetyPolicy
+    participant C as ControlCalc
+    participant A as PwmActuator
+    S->>M: 조향값·갱신 정보
+    M->>P: 유효 조향값·정상 진단
+    P->>C: 조향값·출력 허가
+    C->>A: PWM·방향·동작 허가
+    A->>A: 하드웨어 출력 반영
+```
+
+## 8. 고장 동작 데이터 흐름
+
+```mermaid
+sequenceDiagram
+    participant M as CanMonitor/WdgM
+    participant P as SafetyPolicy
+    participant C as ControlCalc
+    participant A as PwmActuator
+    M->>P: Fault 정보
+    P->>P: FAIL-SAFE 전환
+    P->>C: 안전 조향값·출력 금지
+    C->>A: PWM 0·방향 비활성
+    A->>A: 하드웨어 출력 차단
+```
+
+## 9. SW 요구사항–아키텍처 추적성
+
+| SW 요구사항 | 할당 SWC | Interface/Runnable |
 |---|---|---|
-| `EMS` | 시동 상태 반영 | 시동 입력을 엔진 상태로 반영하고 powertrain 기준 상태를 유지한다. |
-| `TCU` | 기어 상태 반영 | 기어 입력을 변속 상태로 반영한다. |
-| `VCU` | 가속 입력 반영 | 운전자 가속 입력을 구동 요구 상태로 반영한다. |
-| `ESC` | 제동 입력 반영 | 운전자 제동 입력을 제동 상태로 반영한다. |
-| `MDPS` | 조향 입력 반영 | 운전자 조향 입력을 조향 상태로 반영한다. |
-| `BCM` | 유도 구간 앰비언트 제어 | 구간 진입/전환/종료 및 방향 맥락에 따라 앰비언트 패턴을 제어한다. |
-|  | 차체 기본 제어 | 비상등 및 창문 기본 제어를 수행한다. |
-|  | 실내 편의 상태 반영 | 공조, 시트, 미러, 와이퍼, 보안 상태를 수용해 차체 편의 상태에 반영한다. |
-|  | 출입 개폐 상태 통합 | 도어 및 테일게이트 상태를 출입 개방 관련 상태로 통합한다. |
-|  | 탑승자 보호 상태 통합 | 탑승자 감지 및 보호 상태를 보호 상태로 통합한다. |
-|  | 실내 편의 및 조명 상태 통합 | AFLS/AHLS/후석 공조/선루프 등 실내 편의 및 조명 상태를 차체 편의 상태로 통합한다. |
-| `DATC` | 실내 공조 상태 제공 | 실내 공조 설정과 동작 상태를 차체 편의 경로에 제공한다. |
-| `IVI` | 구간 컨텍스트 계산 | 구간/방향/거리/제한속도 입력으로 주행 컨텍스트를 계산한다. |
-|  | 표시 및 음향 서비스 상태 통합 | HUD, AMP, RSE, 내비 상태를 표시 및 음향 서비스 상태로 통합한다. |
-|  | 디지털 접근 및 차량 서비스 상태 통합 | 텔레매틱스, OTA, 디지털 키, 차량 서비스 상태를 사용자 서비스 상태로 통합한다. |
-| `TMU` | 텔레매틱스 서비스 상태 제공 | 원격 연결 및 서비스 상태를 IVI 서비스 경로에 제공한다. |
-| `CLU` | 기본 주행 정보 표시 | 속도, 기어, 기본 상태를 클러스터에 표시한다. |
-|  | 경고 문구 및 방향 표시 | 경고 종류와 접근 방향에 따른 문구를 표시한다. |
-|  | 경보 이력 및 설정 반영 | 경보 이력 조회와 표시, 음량 설정을 반영한다. |
-|  | 경고 표시 일관성 유지 | 앰비언트와 클러스터 경고가 같은 상황을 기준으로 표시되도록 유지한다. |
-| `ADAS` | 기본 주행 경고 판정 | 구간 및 주행 상태를 기준으로 기본 경고를 판정한다. |
-|  | 경고 우선순위 중재 | 긴급/구간 경고가 동시에 존재할 때 우선순위를 결정한다. |
-|  | 긴급 접근 위험도 산정 | 긴급차량 방향, ETA, 자차 속도를 결합해 근접 위험도를 산정한다. |
-|  | 감속 보조 요청 관리 | 위험도 임계 초과 시 감속 보조 요청을 생성하고 운전자 개입 시 해제한다. |
-|  | 객체 위험 경고 판단 | 객체 목록, TTC, 상대속도 기반으로 객체 위험 경고를 판단한다. |
-|  | 경보 편의 및 강건성 보정 | 방향지시등, 주행모드, 안전벨트, 입력 갱신 상태와 채널 가용성 조건을 반영해 경고를 보정한다. |
-|  | 주행 보조/주차/센서 상태 통합 | ADAS 확장 상태를 위험도와 가용성 판단에 반영한다. |
-| `SCC` | 종방향 보조 상태 전달 | 종방향 안전거리 및 주행 보조 상태를 ADAS 판단 경로에 제공한다. |
-| `V2X` | 경찰 긴급 알림 송신 | 경찰 긴급 접근 알림을 생성해 송신한다. |
-|  | 구급 긴급 알림 송신 | 구급 긴급 접근 알림을 생성해 송신한다. |
-|  | 긴급 알림 수신/해제/타임아웃 관리 | 긴급 알림 수신 상태를 유지하고 타임아웃 시 안전 해제를 수행한다. |
-|  | 경보 이벤트 기록 | 경고 이벤트 코드와 경보 이력 스냅샷을 기록한다. |
-| `CGW` | 경고 정보 게이트웨이 전달 | 차량 네트워크 간 경고 정보 전달과 정규화를 수행한다. |
-|  | 경고 정보 전달 경계 및 fail-safe 유지 | 경계 상태를 유지하고 fail-safe 전환을 관리한다. |
-|  | 샤시 확장 상태 통합 | 전동 주차/제동 보조 및 차체안정 상태를 경고 맥락으로 통합한다. |
-|  | 백본 서비스 가용성 반영 | 백본 및 경고 서비스 상태를 전달 정책에 반영한다. |
-|  | 구동/전력변환 상태 통합 | 전동화 구동 상태를 통합해 동력 전달 가용성 판단에 반영한다. |
-|  | 변속·열관리·충전 인터페이스 상태 통합 | 변속, 열관리, 충전 인터페이스 상태를 구동 준비 상태 판단에 반영한다. |
-| `ETHB` | 백본 경로 상태 감시 | Ethernet 백본의 경로 상태와 통신 갱신 상태를 감시한다. |
-| `SGW` | 진단 보안 및 경로 상태 제공 | 보안 상태와 진단 경로 소유 해석을 진단 관측 경로에 제공한다. |
-| `DCM` | 진단 서비스 및 응답 상태 제공 | 진단 서비스 상태와 요청/응답 요약 상태를 진단 관측 경로에 제공한다. |
-| `EXT_DIAG` | 외부 진단 관측면 제공 | 차량 서비스, 보안, 진단 상태를 외부 진단 사용자 관측 경로에 제공한다. |
-| Ambient Lights | 앰비언트 표시 수행 | 제어 신호에 따라 앰비언트 패턴과 색상을 표시한다. |
-| Cluster Display | 클러스터 표시 수행 | 경고 문구와 방향 정보를 클러스터에 표시한다. |
-| Navigation Panel | 주행 컨텍스트 입력 제공 | 구간, 방향, 거리, 제한속도 입력을 제공한다. |
-| Gear Selector | 변속 입력 제공 | 운전자의 기어 조작 정보를 TCU에 전달한다. |
-| Acceleration Pedal | 가속 입력 제공 | 운전자의 가속 페달 조작 정보를 VCU에 전달한다. |
-| Brake Pedal | 제동 입력 제공 | 운전자의 제동 페달 조작 정보를 ESC에 전달한다. |
-| Steering Wheel | 조향 입력 제공 | 운전자의 조향 입력 정보를 MDPS에 전달한다. |
-| `EPB` | 전동 주차 상태 제공 | 전동 주차 브레이크 상태 정보를 샤시 경로에 전달한다. |
-| `EHB` | 제동 보조 상태 제공 | 제동 보조 상태 정보를 샤시 경로에 전달한다. |
-| `VSM` | 차체안정 상태 제공 | 차체 자세 제어 상태 정보를 샤시 경로에 전달한다. |
-| `AFLS` | 조명 방향 상태 제공 | 전조등 방향 상태 정보를 바디 경로에 전달한다. |
-| `AHLS` | 조명 높이 상태 제공 | 전조등 높이 상태 정보를 바디 경로에 전달한다. |
-| `HUD` | 전면 경고 표시 | 경고 및 안내 정보를 전면 표시 화면에 제공한다. |
-| `AMP` | 경고 음향 출력 | 경고 우선순위에 따라 음향 안내를 출력한다. |
-| `IBOX` | 원격 서비스 상태 제공 | 원격 통신 및 차량 서비스 상태 정보를 경계 경로에 전달한다. |
-| `OBC` | 충전 상태 제공 | 충전 상태 정보를 구동 상태 판단 경로에 전달한다. |
-| `DCDC` | 전력 변환 상태 제공 | 전력 변환 상태 정보를 구동 상태 판단 경로에 전달한다. |
-| `MCU` | 모터 구동 상태 제공 | 모터 구동 상태 정보를 구동 상태 판단 경로에 전달한다. |
-| `INVERTER` | 인버터 상태 제공 | 인버터 동작 상태 정보를 구동 상태 판단 경로에 전달한다. |
+| SWR-IN-001 | SWC-001 | SW-IF-001, RUN-001 |
+| SWR-COM-001 | SWC-001 | SW-IF-002, RUN-001 |
+| SWR-COM-002 | SWC-002 | SW-IF-002, RUN-002 |
+| SWR-DIAG-001 | SWC-002 | SW-IF-003, RUN-002 |
+| SWR-DIAG-002 | SWC-002 | SW-IF-003, RUN-002 |
+| SWR-DIAG-003 | SWC-002 | SW-IF-003, RUN-002 |
+| SWR-WDG-001 | SWC-003 | SW-IF-004, RUN-003 |
+| SWR-WDG-002 | SWC-003 | SW-IF-004, RUN-003 |
+| SWR-SAFE-001 | SWC-003 | SW-IF-003~005, RUN-003 |
+| SWR-SAFE-002 | SWC-003~005 | SW-IF-005~007, RUN-003~005 |
+| SWR-SAFE-003 | SWC-003~005 | SW-IF-005~007, RUN-003~005 |
+| SWR-SAFE-004 | SWC-003 | SW-IF-005, RUN-003 |
+| SWR-SAFE-005 | SWC-003 | SW-IF-005, RUN-003 |
+| SWR-CTRL-001 | SWC-004 | SW-IF-005~006, RUN-004 |
+| SWR-CTRL-002 | SWC-004 | SW-IF-005~006, RUN-004 |
+| SWR-ACT-001 | SWC-005 | SW-IF-006~007, RUN-005 |
+| SWR-ACT-002 | SWC-005 | SW-IF-006~007, RUN-005 |
+| SWR-MON-001 | SWC-003 | SW-IF-008, RUN-003 |
+| SWR-MON-002 | SWC-003 | SW-IF-008, RUN-003 |
+| SWR-MON-003 | SWC-003~005 | SW-IF-005~008, RUN-003~005 |
 
-- 시스템 아키텍처 관점에서 `ETHB`는 Ethernet 백본을 나타내는 표면 표기이며, 본 문서에서는 백본 경로 상태 감시 주체로 사용한다.
-- `EXT_DIAG`는 신규 사용자 경고 기능이 아니라 차량 서비스, 보안, 진단 상태를 외부 진단 관측 경로로 제공하는 표면 노드로 사용한다.
-- `VALIDATION_HARNESS`는 생산 ECU 인벤토리와 분리 유지하며, 제출용 차량 아키텍처에는 포함하지 않는다.
+## 10. 후속 설계 전개
+
+| 아키텍처 항목 | 후속 문서 | 구체화 내용 |
+|---|---|---|
+| SW-IF-002, SW-IF-008 | `0302_Network_Flow_Definition.md` | ECU 간 네트워크 흐름과 송수신 순서 |
+| SW-IF-002, RUN-001~002 | `0303_Communication_Specification.md` | CAN ID, DLC, Signal, 범위, 주기 및 Alive Counter |
+| SW-IF-003~006, RUN-002~004 | `0304_System_Variables.md` | Fault Flag, 상태값, Counter, 임계값 및 초기값 |
+| 전체 SWC·Interface·Runnable | `04_SW_Design_Implementation.md` | RTE API, Task Mapping, 알고리즘, IoHwAb 및 코드 |
+| 전체 `SWR-*` 및 SWC | Test Specification | 단위·통합 시험 항목과 합격 기준 |
 
 ---
+
+본 문서는 SW 요구사항을 AUTOSAR SWC 구조에 할당하는 기준 문서이다. 후속 상세설계와 시험 문서는 `SWR-*`, `SWC-*`, `SW-IF-*`, `RUN-*` ID를 참조하여 양방향 추적성을 유지한다.
